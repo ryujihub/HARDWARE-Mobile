@@ -1,0 +1,11 @@
+0000000000000000000000000000000000000000 600f3484778a1f51f498c028e846c9b8c6b391cf ryujihub <caburnayandrey09@gmail.com> 1750149341 +0800	commit (initial): 2ndcommit
+600f3484778a1f51f498c028e846c9b8c6b391cf 172d877953bb672670ab8fa27ff1f117b773f8f5 ryujihub <caburnayandrey09@gmail.com> 1753539661 +0800	commit: july26
+172d877953bb672670ab8fa27ff1f117b773f8f5 736b1e928f86b47dc9ce3a8b19cd3942c24c780f ryujihub <caburnayandrey09@gmail.com> 1753539754 +0800	commit: july
+736b1e928f86b47dc9ce3a8b19cd3942c24c780f 0000000000000000000000000000000000000000 ryujihub <caburnayandrey09@gmail.com> 1753539776 +0800	Branch: renamed refs/heads/main to refs/heads/main
+736b1e928f86b47dc9ce3a8b19cd3942c24c780f 736b1e928f86b47dc9ce3a8b19cd3942c24c780f ryujihub <caburnayandrey09@gmail.com> 1753539776 +0800	Branch: renamed refs/heads/main to refs/heads/main
+736b1e928f86b47dc9ce3a8b19cd3942c24c780f 77cda58d2d593d2abf151f5b56fef6654ff2dc9e ryujihub <caburnayandrey09@gmail.com> 1754485098 +0800	commit: aug 6
+77cda58d2d593d2abf151f5b56fef6654ff2dc9e 54ecd9e180f69118b69e88325d10104a2e18d5a8 ryujihub <caburnayandrey09@gmail.com> 1754552705 +0800	commit: aug 7
+54ecd9e180f69118b69e88325d10104a2e18d5a8 405a907819dfbfd373a1e8a505e281a72d5845f0 ryujihub <caburnayandrey09@gmail.com> 1757573731 +0800	commit: sep11
+405a907819dfbfd373a1e8a505e281a72d5845f0 405a907819dfbfd373a1e8a505e281a72d5845f0 ryujihub <caburnayandrey09@gmail.com> 1758642620 +0800	checkout: moving from main to cleanup/remove-unused-components
+405a907819dfbfd373a1e8a505e281a72d5845f0 ec1414d9a36773d6ac345b4a3401e4820a6c7379 ryujihub <caburnayandrey09@gmail.com> 1758642853 +0800	commit: chore: remove unused UI components (HelloWave, ParallaxScrollView, Collapsible, HapticTab)
+ec1414d9a36773d6ac345b4a3401e4820a6c7379 b91eeef3e8576027216be5cc5b5a9a7bab38b935 ryujihub <caburnayandrey09@gmail.com> 1758644033 +0800	commit: sept24
