@@ -3,7 +3,7 @@ import { Picker } from '@react-native-picker/picker';
 import { Camera, CameraView } from 'expo-camera';
 import firebase from 'firebase/compat/app';
 import { collection, onSnapshot, query } from 'firebase/firestore';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -16,6 +16,7 @@ import {
   Vibration,
   View,
 } from 'react-native';
+import HelpModal from '../components/HelpModal'; // Import the new HelpModal component
 import { auth, db } from '../config/firebase';
 
 export default function InventoryScreen({ navigation }) {
@@ -133,29 +134,11 @@ export default function InventoryScreen({ navigation }) {
   const [manualCode, setManualCode] = useState('');
 
   // Continuous scanning mode and duplicate-debounce cache
-  const [continuousMode, setContinuousMode] = useState(false);
-  const continuousCooldownMs = 800; // ms to ignore duplicate scans
-  const lastScansRef = useRef({});
-  // Transient toast for continuous scans
-  const [toast, setToast] = useState({ visible: false, text: '' });
-  const toastTimerRef = useRef(null);
-
-  const showToast = (text, duration = 1200) => {
-    // clear existing
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current);
-    }
-    setToast({ visible: true, text });
-    toastTimerRef.current = setTimeout(() => {
-      setToast({ visible: false, text: '' });
-      toastTimerRef.current = null;
-    }, duration);
-  };
-
   // Add new state for quick stock update
   const [isQuickUpdateMode, setIsQuickUpdateMode] = useState(false);
   const [quickUpdateAmount, setQuickUpdateAmount] = useState('0');
   const [selectedItemForUpdate, setSelectedItemForUpdate] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Update the permission request function
   const requestCameraPermission = async () => {
@@ -198,15 +181,20 @@ export default function InventoryScreen({ navigation }) {
       console.log('Starting to fetch inventory items...');
       const itemsRef = db.collection('inventory');
 
-      // First, let's get all items without the user filter to check what's in the database
+      // Fetch all items to inspect their userId values
       const allItemsSnapshot = await itemsRef.get();
-      console.log('All items in database (without user filter):', allItemsSnapshot.docs.length);
+      console.log('Total items in database:', allItemsSnapshot.docs.length);
 
-      // Fix any items that don't have userId
+      allItemsSnapshot.docs.forEach(doc => {
+        const data = doc.data();
+        console.log(`Item ID: ${doc.id}, Name: ${data.name}, UserId: ${data.userId}`);
+      });
+
+      // Identify and fix items that don't have a userId by assigning them to the current user
       const fixPromises = allItemsSnapshot.docs
-        .filter(doc => !doc.data().userId)
+        .filter(doc => doc.data().userId !== user.uid) // Filter items whose userId is not the current user's UID
         .map(doc => {
-          console.log('Fixing item without userId:', doc.id);
+          console.log('Fixing item without userId:', doc.id, 'Assigning to:', user.uid);
           return doc.ref.update({
             userId: user.uid,
             lastUpdated: new Date(),
@@ -217,23 +205,18 @@ export default function InventoryScreen({ navigation }) {
         console.log('Fixing', fixPromises.length, 'items without userId');
         await Promise.all(fixPromises);
         console.log('Successfully fixed items without userId');
+        // After fixing, reload items to ensure the snapshot listener picks up the changes
+        // This will trigger the onSnapshot below with the updated data
       }
 
-      // Now get items with user filter
-      const q = itemsRef.where('userId', '==', user.uid);
-      console.log('Query created with user ID:', user.uid);
+      // Now, set up the real-time listener for items belonging to the current user
+      const userItemsQuery = itemsRef.where('userId', '==', user.uid);
+      console.log('Querying items for user ID:', user.uid);
 
-      const unsubscribe = q.onSnapshot(
+      const unsubscribe = userItemsQuery.onSnapshot(
         snapshot => {
           console.log('Received snapshot with docs:', snapshot.docs.length);
           console.log('Snapshot metadata:', snapshot.metadata);
-
-          if (snapshot.empty) {
-            console.log('No items found in the database for this user');
-            setItems([]);
-            setLoading(false);
-            return;
-          }
 
           const itemsArray = snapshot.docs.map(doc => {
             const data = doc.data();
@@ -245,27 +228,6 @@ export default function InventoryScreen({ navigation }) {
           });
 
           console.log('Total items fetched for user:', itemsArray.length);
-          console.log(
-            'All fetched item IDs:',
-            itemsArray.map(item => item.id),
-          );
-
-          // Compare with all items to find the missing one
-          const missingItems = allItemsSnapshot.docs
-            .filter(doc => !itemsArray.some(item => item.id === doc.id))
-            .map(doc => ({ id: doc.id, data: doc.data() }));
-
-          if (missingItems.length > 0) {
-            console.log('Missing items (not shown in inventory):', missingItems);
-            console.log('Possible reasons:');
-            missingItems.forEach(item => {
-              console.log(`Item ${item.id}:`, {
-                hasUserId: !!item.data.userId,
-                userId: item.data.userId,
-                matchesCurrentUser: item.data.userId === user.uid,
-              });
-            });
-          }
 
           setItems(itemsArray);
           setLoading(false);
@@ -449,16 +411,6 @@ export default function InventoryScreen({ navigation }) {
 
   // Modify the barcode scanner handler to support quick update mode
   const handleBarCodeScanned = ({ data }) => {
-    const now = Date.now();
-
-    // Debounce duplicate scans within cool-down window
-    const last = lastScansRef.current[data];
-    if (last && now - last < continuousCooldownMs) {
-      // ignore duplicate
-      return;
-    }
-    lastScansRef.current[data] = now;
-
     Vibration.vibrate(200);
 
     setScanHistory(prev =>
@@ -499,8 +451,8 @@ export default function InventoryScreen({ navigation }) {
         Alert.alert('Not Found', 'No item found with this product code.');
       }
 
-      // Keep scanner open in continuous mode; otherwise close
-      if (!continuousMode) setScannerVisible(false);
+      // Close scanner after quick update
+      setScannerVisible(false);
       return;
     }
 
@@ -508,20 +460,12 @@ export default function InventoryScreen({ navigation }) {
     if (showAddForm) {
       setNewItem(prev => ({ ...prev, productCode: data }));
     } else if (showEditForm && editItem) {
-      setEditItem(prev => ({ ...prev, productCode: data }));
+      setEditItem(prev => ({ ...editItem, productCode: data }));
     }
 
-    // Keep scanner open only if continuousMode enabled
-    if (!continuousMode) {
-      setScannerVisible(false);
-      Alert.alert('Success', `Barcode scanned: ${data}`);
-    } else {
-      // In continuous mode, show a subtle feedback toast rather than an alert
-      // Prefer item name if found
-      const found = items.find(it => it.productCode === data);
-      const label = found ? `${found.name} (${data})` : data;
-      showToast(label);
-    }
+    // Close scanner after scan
+    setScannerVisible(false);
+    Alert.alert('Success', `Barcode scanned: ${data}`);
   };
 
   const toggleTorch = () => {
@@ -834,7 +778,7 @@ export default function InventoryScreen({ navigation }) {
               <Ionicons name="scan-outline" size={48} color="#ccc" />
               <Text style={styles.scanPromptText}>Scan an item to update its stock</Text>
               <Text style={styles.scanPromptSubtext}>
-                Enter the amount above and scan the item&apos;s barcode
+                Enter the amount above and scan the item's barcode
               </Text>
             </View>
           )}
@@ -860,19 +804,14 @@ export default function InventoryScreen({ navigation }) {
         </Text>
       </TouchableOpacity>
 
-      {/* Continuous scan toggle */}
-      <TouchableOpacity
-        style={[styles.headerButton, continuousMode && styles.headerButtonActive]}
-        onPress={() => setContinuousMode(c => !c)}
-      >
-        <Ionicons name={continuousMode ? 'play' : 'play-outline'} size={20} color={continuousMode ? '#fff' : '#007AFF'} />
-        <Text style={[styles.headerButtonText, continuousMode && styles.headerButtonTextActive]}>
-          {continuousMode ? 'Continuous On' : 'Continuous Off'}
-        </Text>
-      </TouchableOpacity>
       <TouchableOpacity style={styles.headerButton} onPress={() => setShowAddForm(!showAddForm)}>
         <Ionicons name={showAddForm ? 'close' : 'add'} size={20} color="#007AFF" />
         <Text style={styles.headerButtonText}>{showAddForm ? 'Cancel' : 'Add Item'}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.headerButton} onPress={() => setShowHelpModal(true)}>
+        <Ionicons name="information-circle-outline" size={20} color="#007AFF" />
+        <Text style={styles.headerButtonText}>Help</Text>
       </TouchableOpacity>
     </View>
   );
@@ -1390,16 +1329,7 @@ export default function InventoryScreen({ navigation }) {
 
       {renderScanner()}
       {renderQuickUpdateMode()}
-      {/* Transient toast for continuous scanning */}
-      {toast.visible && (
-        <View style={styles.toastContainer} pointerEvents="none">
-          <View style={styles.toastInner}>
-            <Text style={styles.toastText} numberOfLines={1} ellipsizeMode="tail">
-              {toast.text}
-            </Text>
-          </View>
-        </View>
-      )}
+      <HelpModal visible={showHelpModal} onClose={() => setShowHelpModal(false)} />
     </View>
   );
 }
