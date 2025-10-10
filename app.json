@@ -1,23 +1,23 @@
 {
   "expo": {
-    "name": "inventory-system",
-    "slug": "inventory-system",
+    "name": "Metro Manila Hills Hardware Inventory",
+    "slug": "inventory",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/inventory-icon.png",
     "scheme": "inventorysystem",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.andreyryuji09.inventorysystem",
+      "bundleIdentifier": "com.andreyryuji0909.inventory",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/inventory-icon.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
@@ -25,7 +25,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "package": "com.andreyryuji09.inventorysystem"
+      "package": "com.andreyryuji0909.inventory"
     },
     "web": {
       "bundler": "metro",
@@ -35,7 +35,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
@@ -46,15 +46,17 @@
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes."
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "eas": {
-        "projectId": "2c8ea1e9-9d55-4b46-adb0-6dde425c62b5"
+        "projectId": "5288fb9c-71b4-4077-9deb-d9769ed94e1e"
       }
-    }
+    },
+    "owner": "andreyryuji0909"
   }
 }

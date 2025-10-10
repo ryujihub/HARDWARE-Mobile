@@ -32,45 +32,6 @@ const HelpModal = ({ visible, onClose }) => {
               - <Text style={{ fontWeight: 'bold' }}>Total Revenue:</Text> The total sales generated from all orders.
             </Text>
 
-            <Text style={styles.sectionTitle}>Inventory Health</Text>
-            <Text style={styles.sectionContent}>
-              This section provides a deeper look into the status and performance of your inventory.
-            </Text>
-
-            <Text style={styles.subSectionTitle}>Total Value Breakdown</Text>
-            <Text style={styles.sectionContent}>
-              Categorizes your inventory items based on their individual value (price * current stock):
-              <Text style={{ fontWeight: 'bold' }}> High Value</Text> ({'>'} ₱1000),
-              <Text style={{ fontWeight: 'bold' }}> Medium Value</Text> (₱100 - ₱1000), and
-              <Text style={{ fontWeight: 'bold' }}> Low Value</Text> ({'<'} ₱100).
-            </Text>
-
-            <Text style={styles.subSectionTitle}>Stock Status</Text>
-            <Text style={styles.sectionContent}>
-              - <Text style={{ fontWeight: 'bold' }}>Optimal:</Text> Items with stock levels within their defined minimum and maximum thresholds.
-            </Text>
-            <Text style={styles.sectionContent}>
-              - <Text style={{ fontWeight: 'bold' }}>Overstocked:</Text> Items with stock levels exceeding their maximum threshold, potentially leading to holding costs.
-            </Text>
-            <Text style={styles.sectionContent}>
-              - <Text style={{ fontWeight: 'bold' }}>Understocked:</Text> Items with stock levels below their minimum threshold, risking stockouts.
-            </Text>
-            <Text style={styles.sectionContent}>
-              - <Text style={{ fontWeight: 'bold' }}>Dead Stock:</Text> Items with current stock but no recorded usage, indicating they are not selling.
-            </Text>
-
-            <Text style={styles.subSectionTitle}>Performance Metrics</Text>
-            <Text style={styles.sectionContent}>
-              - <Text style={{ fontWeight: 'bold' }}>Turnover Rate:</Text> Measures how many times inventory is sold or used over a period. A higher rate generally indicates efficient sales.
-            </Text>
-            <Text style={styles.sectionContent}>
-              - <Text style={{ fontWeight: 'bold' }}>Value Distribution:</Text> A summary of how many items fall into high, medium, and low value categories.
-            </Text>
-
-            <Text style={styles.subSectionTitle}>Top Performing Items</Text>
-            <Text style={styles.sectionContent}>
-              Lists your top 5 items based on their sales performance (price * usage).
-            </Text>
 
             <Text style={styles.sectionTitle}>Inventory Management Actions</Text>
             <Text style={styles.sectionContent}>

@@ -6,7 +6,6 @@ import {
   RefreshControl,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TouchableOpacity,
   View,
@@ -30,27 +29,9 @@ export default function HomeScreen({ navigation }) {
     topSellingItem: '',
     monthlyGrowth: 0,
     inventoryMetrics: {
-      turnoverRate: 0,
-      stockValueByCategory: {},
-      inventoryHealth: {
-        optimal: 0,
-        overstocked: 0,
-        understocked: 0,
-        deadStock: 0,
-      },
       topPerformingItems: [],
-      categoryPerformance: {},
-      stockValueDistribution: {
-        highValue: 0,
-        mediumValue: 0,
-        lowValue: 0,
-      },
     },
   });
-  const [autoCompute, setAutoCompute] = useState(false);
-  const [metricsLoading, setMetricsLoading] = useState(false);
-  const [lastComputedAt, setLastComputedAt] = useState(null);
-  const [statsStale, setStatsStale] = useState(false);
   const [ordersData, setOrdersData] = useState([]); // Renamed from salesData
   const [username, setUsername] = useState('');
   const [showHelpModal, setShowHelpModal] = useState(false);
@@ -89,11 +70,7 @@ export default function HomeScreen({ navigation }) {
         const itemsArray = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setItems(itemsArray);
         setLoading(false);
-        // mark stats stale so user can recompute on demand
-        setStatsStale(true);
-        if (autoCompute) {
-          computeHeavyStats(itemsArray, ordersData); // Pass ordersData
-        }
+        calculateQuickStats(itemsArray, ordersData);
       },
       error => {
         console.error('Error fetching items:', error);
@@ -103,7 +80,7 @@ export default function HomeScreen({ navigation }) {
     );
 
     return () => unsubscribe();
-  }, [autoCompute, computeHeavyStats, username, ordersData]); // Add ordersData to dependencies
+  }, [username, ordersData]); // Removed autoCompute, computeHeavyStats from dependencies
 
   useEffect(() => {
     const ordersRef = collection(db, 'orders'); // Changed to 'orders' collection
@@ -114,11 +91,7 @@ export default function HomeScreen({ navigation }) {
       snapshot => {
         const fetchedOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setOrdersData(fetchedOrders);
-        // Mark stats stale to recompute if autoCompute is off, or trigger recompute if on
-        setStatsStale(true);
-        if (autoCompute) {
-          computeHeavyStats(items, fetchedOrders);
-        }
+        calculateQuickStats(items, fetchedOrders);
       },
       error => {
         console.error('Error fetching orders data:', error);
@@ -126,95 +99,22 @@ export default function HomeScreen({ navigation }) {
     );
 
     return () => unsubscribeOrders();
-  }, [autoCompute, computeHeavyStats, items]); // Remove ordersData from dependencies, as fetchedOrders is used directly
+  }, [items, ordersData]);
 
-  // compute function extracted for on-demand use
-  const computeHeavyStats = React.useCallback((itemsDataForCalc, ordersDataForCalc) => {
-    try {
-      setMetricsLoading(true);
+  const calculateQuickStats = React.useCallback((itemsData, ordersData) => {
+    const totalItems = itemsData.length;
+    const totalValue = itemsData.reduce((sum, item) => sum + (item.price || 0) * (item.currentStock || 0), 0);
+    const outOfStock = itemsData.filter(item => item.currentStock === 0).length;
+    const totalSales = ordersData.reduce((sum, order) => sum + (order.total || 0), 0);
 
-      const totalValue = itemsDataForCalc.reduce((sum, item) => sum + (item.price || 0) * (item.currentStock || 0), 0);
-      const outOfStock = itemsDataForCalc.filter(item => item.currentStock === 0).length;
-      const categories = new Set(itemsDataForCalc.map(item => item.category)).size;
-      const highValue = itemsDataForCalc.filter(item => (item.price || 0) * (item.currentStock || 0) > 1000).length;
-      
-      // Calculate total sales from the ordersData collection
-      const totalSales = ordersDataForCalc.reduce((sum, order) => sum + (order.total || 0), 0);
-      const prices = itemsDataForCalc.map(item => item.price || 0);
-      const averagePrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
-
-      const categoryPrices = {};
-      itemsDataForCalc.forEach(item => {
-        if (item.category) {
-          if (!categoryPrices[item.category]) categoryPrices[item.category] = [];
-          categoryPrices[item.category].push(item.price || 0);
-        }
-      });
-
-      const categoryAverages = {};
-      Object.entries(categoryPrices).forEach(([category, prices]) => {
-        categoryAverages[category] = prices.reduce((a, b) => a + b, 0) / prices.length;
-      });
-
-      const topCategory = Object.entries(categoryAverages).sort(([, a], [, b]) => b - a)[0]?.[0] || 'N/A';
-
-      const topPerformingItems = [...itemsDataForCalc]
-        .sort((a, b) => (b.price || 0) * (b.usage || 0) - (a.price || 0) * (a.usage || 0))
-        .slice(0, 5)
-        .map(item => ({ name: item.name, sales: (item.price || 0) * (item.usage || 0), stock: item.currentStock }));
-
-      const totalItemsSold = itemsDataForCalc.reduce((sum, item) => sum + (item.usage || 0), 0);
-      const averageInventory = itemsDataForCalc.length > 0 ? itemsDataForCalc.reduce((sum, item) => sum + (item.currentStock || 0), 0) / itemsDataForCalc.length : 0;
-      const turnoverRate = averageInventory > 0 ? (totalItemsSold / averageInventory) * 100 : 0;
-
-      const stockValueByCategory = {};
-      itemsDataForCalc.forEach(item => {
-        if (item.category) {
-          const value = (item.price || 0) * (item.currentStock || 0);
-          stockValueByCategory[item.category] = (stockValueByCategory[item.category] || 0) + value;
-        }
-      });
-
-      const inventoryHealth = {
-        optimal: itemsDataForCalc.filter(item => (item.currentStock || 0) >= (item.minimumStock || 0) && (item.currentStock || 0) <= ((item.maximumStock || (item.minimumStock || 0) * 2))).length,
-        overstocked: itemsDataForCalc.filter(item => (item.currentStock || 0) > ((item.maximumStock || (item.minimumStock || 0) * 2))).length,
-        understocked: itemsDataForCalc.filter(item => (item.currentStock || 0) < (item.minimumStock || 0) && (item.currentStock || 0) > 0).length,
-        deadStock: itemsDataForCalc.filter(item => (item.usage || 0) === 0 && (item.currentStock || 0) > 0).length,
-      };
-
-      const stockValueDistribution = {
-        highValue: itemsDataForCalc.filter(item => (item.price || 0) * (item.currentStock || 0) > 1000).length,
-        mediumValue: itemsDataForCalc.filter(item => (item.price || 0) * (item.currentStock || 0) >= 100 && (item.price || 0) * (item.currentStock || 0) <= 1000).length,
-        lowValue: itemsDataForCalc.filter(item => (item.price || 0) * (item.currentStock || 0) < 100).length,
-      };
-
-      setStats(prev => ({
-        ...prev,
-        totalItems: items.length, // Use items state directly here
-        totalValue,
-        categories,
-        outOfStock,
-        highValue,
-        totalSales,
-        topCategory,
-        averagePrice,
-        inventoryMetrics: {
-          turnoverRate,
-          stockValueByCategory,
-          inventoryHealth,
-          topPerformingItems,
-          stockValueDistribution,
-        },
-      }));
-
-      setLastComputedAt(new Date());
-      setStatsStale(false);
-    } catch (e) {
-      console.error('Failed to compute metrics:', e);
-    } finally {
-      setMetricsLoading(false);
-    }
-  }, [ordersData, items]); // Added items to dependency array
+    setStats(prev => ({
+      ...prev,
+      totalItems,
+      totalValue,
+      outOfStock,
+      totalSales,
+    }));
+  }, []);
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
@@ -330,187 +230,6 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Inventory Health */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Inventory Health</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <TouchableOpacity
-                style={{ paddingHorizontal: 10, paddingVertical: 6, opacity: metricsLoading ? 0.6 : 1 }}
-                onPress={() => !metricsLoading && computeHeavyStats(items, ordersData)}
-                disabled={metricsLoading}
-              >
-                <Text style={styles.sectionAction}>{metricsLoading ? 'Refreshing...' : 'Refresh Metrics'}</Text>
-              </TouchableOpacity>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontSize: 12, color: statsStale ? '#F57C00' : '#666' }}>{statsStale ? 'Stale' : 'Up-to-date'}</Text>
-                <Switch value={autoCompute} onValueChange={val => setAutoCompute(val)} />
-                {lastComputedAt && (
-                  <Text style={{ fontSize: 11, color: '#999' }}>{`Last: ${lastComputedAt.toLocaleString()}`}</Text>
-                )}
-              </View>
-            </View>
-          </View>
-          <View style={styles.metricsContainer}>
-            {/* Total Value Breakdown */}
-            <View style={styles.metricsCard}>
-              <View style={styles.metricsHeader}>
-                <Ionicons name="cash" size={20} color="#2E7D32" />
-                <Text style={styles.metricsTitle}>Total Value Breakdown</Text>
-              </View>
-              <View style={styles.valueBreakdown}>
-                <View style={styles.totalValueRow}>
-                  <Text style={styles.totalValueLabel}>Total Inventory Value</Text>
-                  <Text style={styles.totalValueAmount}>₱{stats.totalValue.toFixed(2)}</Text>
-                </View>
-                <View style={styles.valueBreakdownGrid}>
-                  <View style={styles.valueBreakdownItem}>
-                    <Text style={styles.valueBreakdownLabel}>High Value Items</Text>
-                    <Text style={styles.valueBreakdownValue}>
-                      ₱
-                      {items
-                        .filter(item => item.price * item.currentStock > 1000)
-                        .reduce((sum, item) => sum + item.price * item.currentStock, 0)
-                        .toFixed(2)}
-                    </Text>
-                    <Text style={styles.valueBreakdownCount}>
-                      {stats.inventoryMetrics.stockValueDistribution.highValue} items
-                    </Text>
-                  </View>
-                  <View style={styles.valueBreakdownItem}>
-                    <Text style={styles.valueBreakdownLabel}>Medium Value Items</Text>
-                    <Text style={styles.valueBreakdownValue}>
-                      ₱
-                      {items
-                        .filter(
-                          item =>
-                            item.price * item.currentStock >= 100 &&
-                            item.price * item.currentStock <= 1000,
-                        )
-                        .reduce((sum, item) => sum + item.price * item.currentStock, 0)
-                        .toFixed(2)}
-                    </Text>
-                    <Text style={styles.valueBreakdownCount}>
-                      {stats.inventoryMetrics.stockValueDistribution.mediumValue} items
-                    </Text>
-                  </View>
-                  <View style={styles.valueBreakdownItem}>
-                    <Text style={styles.valueBreakdownLabel}>Low Value Items</Text>
-                    <Text style={styles.valueBreakdownValue}>
-                      ₱
-                      {items
-                        .filter(item => item.price * item.currentStock < 100)
-                        .reduce((sum, item) => sum + item.price * item.currentStock, 0)
-                        .toFixed(2)}
-                    </Text>
-                    <Text style={styles.valueBreakdownCount}>
-                      {stats.inventoryMetrics.stockValueDistribution.lowValue} items
-                    </Text>
-                  </View>
-                </View>
-                <View style={styles.valueInsights}>
-                  <View style={styles.valueInsightItem}>
-                    <Ionicons name="alert-circle" size={16} color="#F57C00" />
-                    <Text style={styles.valueInsightText}>
-                      {stats.inventoryMetrics.inventoryHealth.overstocked} items are overstocked
-                    </Text>
-                  </View>
-                  <View style={styles.valueInsightItem}>
-                    <Ionicons name="trending-up" size={16} color="#2E7D32" />
-                    <Text style={styles.valueInsightText}>
-                      {stats.inventoryMetrics.turnoverRate.toFixed(1)}% turnover rate
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Inventory Health Overview */}
-            <View style={styles.metricsCard}>
-              <View style={styles.metricsHeader}>
-                <Ionicons name="pulse" size={20} color="#2E7D32" />
-                <Text style={styles.metricsTitle}>Stock Status</Text>
-              </View>
-              <View style={styles.metricsGrid}>
-                <View style={styles.metricItem}>
-                  <Text style={styles.metricLabel}>Optimal</Text>
-                  <Text style={[styles.metricValue, styles.optimalValue]}>
-                    {stats.inventoryMetrics.inventoryHealth.optimal}
-                  </Text>
-                </View>
-                <View style={styles.metricItem}>
-                  <Text style={styles.metricLabel}>Overstocked</Text>
-                  <Text style={[styles.metricValue, styles.warningValue]}>
-                    {stats.inventoryMetrics.inventoryHealth.overstocked}
-                  </Text>
-                </View>
-                <View style={styles.metricItem}>
-                  <Text style={[styles.metricValue, styles.dangerValue]}>
-                    {stats.inventoryMetrics.inventoryHealth.understocked}
-                  </Text>
-                </View>
-                <View style={styles.metricItem}>
-                  <Text style={styles.metricLabel}>Dead Stock</Text>
-                  <Text style={[styles.metricValue, styles.alertValue]}>
-                    {stats.inventoryMetrics.inventoryHealth.deadStock}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Turnover and Value Distribution */}
-            <View style={styles.metricsCard}>
-              <View style={styles.metricsHeader}>
-                <Ionicons name="trending-up" size={20} color="#1565C0" />
-                <Text style={styles.metricsTitle}>Performance Metrics</Text>
-              </View>
-              <View style={styles.metricsGrid}>
-                <View style={styles.metricItem}>
-                  <Text style={styles.metricLabel}>Turnover Rate</Text>
-                  <Text style={styles.metricValue}>
-                    {stats.inventoryMetrics.turnoverRate.toFixed(1)}%
-                  </Text>
-                  <Text style={styles.metricSubtext}>Last 30 days</Text>
-                </View>
-                <View style={styles.metricItem}>
-                  <Text style={styles.metricLabel}>Value Distribution</Text>
-                  <View style={styles.valueDistribution}>
-                    <Text style={styles.distributionText}>
-                      High: {stats.inventoryMetrics.stockValueDistribution.highValue}
-                    </Text>
-                    <Text style={styles.distributionText}>
-                      Med: {stats.inventoryMetrics.stockValueDistribution.mediumValue}
-                    </Text>
-                    <Text style={styles.distributionText}>
-                      Low: {stats.inventoryMetrics.stockValueDistribution.lowValue}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-
-            {/* Top Performing Items */}
-            <View style={styles.metricsCard}>
-              <View style={styles.metricsHeader}>
-                <Ionicons name="star" size={20} color="#F57C00" />
-                <Text style={styles.metricsTitle}>Top Performing Items</Text>
-              </View>
-              <View style={styles.topItemsList}>
-                {stats.inventoryMetrics.topPerformingItems.map((item, index) => (
-                  <View key={index} style={styles.topItemRow}>
-                    <Text style={styles.topItemName} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-                    <View style={styles.topItemDetails}>
-                      <Text style={styles.topItemSales}>₱{item.sales.toFixed(2)}</Text>
-                      <Text style={styles.topItemStock}>Stock: {item.stock}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        </View>
 
         {/* Recent Items */}
         <View style={styles.sectionContainer}>

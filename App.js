@@ -1,10 +1,11 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Image, Text, TouchableOpacity, View } from 'react-native';
 import { auth } from './src/config/firebase';
 
 // Import screens
+import InventoryIcon from './assets/images/inventory-icon.png';
 import HomeScreen from './src/screens/HomeScreen';
 import InventoryScreen from './src/screens/InventoryScreen';
 import LoginScreen from './src/screens/LoginScreen';
@@ -67,6 +68,9 @@ export default function App() {
               component={InventoryScreen}
               options={{
                 title: 'Inventory Management',
+                headerLeft: () => (
+                  <Image source={InventoryIcon} style={{ width: 24, height: 24, marginLeft: 15, tintColor: '#fff' }} />
+                ),
               }}
             />
 
