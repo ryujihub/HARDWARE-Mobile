@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, getDocs, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 import HelpModal from '../components/HelpModal'; // Import the new HelpModal component
-import { auth, db } from '../config/firebase';
+import { auth, db } from '../config/firebase'; // Assuming firebase.js exports FIRESTORE_DB
 
 export default function HomeScreen({ navigation }) {
   const [items, setItems] = useState([]);
@@ -35,6 +35,9 @@ export default function HomeScreen({ navigation }) {
   const [ordersData, setOrdersData] = useState([]); // Renamed from salesData
   const [username, setUsername] = useState('');
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [recentActivityData, setRecentActivityData] = useState([]);
+  const [loadingActivity, setLoadingActivity] = useState(true);
+  const [activityError, setActivityError] = useState(null);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -100,6 +103,31 @@ export default function HomeScreen({ navigation }) {
 
     return () => unsubscribeOrders();
   }, [items, ordersData]);
+
+  useEffect(() => {
+    fetchRecentActivity();
+  }, []); // Fetch activity once on component mount
+
+  const fetchRecentActivity = async () => {
+    setLoadingActivity(true);
+    setActivityError(null);
+    try {
+      const activityRef = collection(db, 'activity');
+      const q = query(activityRef, orderBy('createdAt', 'desc'), limit(5)); // Fetch last 5 activities
+      const querySnapshot = await getDocs(q);
+      const activities = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt ? new Date(doc.data().createdAt.toDate()).toLocaleString() : 'N/A'
+      }));
+      setRecentActivityData(activities);
+    } catch (err) {
+      console.error("Error fetching recent activity: ", err);
+      setActivityError("Failed to fetch activity. Please try again.");
+    } finally {
+      setLoadingActivity(false);
+    }
+  };
 
   const calculateQuickStats = React.useCallback((itemsData, ordersData) => {
     const totalItems = itemsData.length;
@@ -167,14 +195,14 @@ export default function HomeScreen({ navigation }) {
                 </Text>
               </View>
               <TouchableOpacity
-                style={styles.settingsButton}
+                style={styles.iconButton}
                 onPress={() => navigation.navigate('Settings')}
               >
                 <Ionicons name="settings-outline" size={24} color="#007AFF" />
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.settingsButton} // Reusing settingsButton style for now
-                onPress={() => setShowHelpModal(true)} // Will implement setShowHelpModal later
+                style={styles.iconButton}
+                onPress={() => setShowHelpModal(true)}
               >
                 <Ionicons name="information-circle-outline" size={24} color="#007AFF" />
               </TouchableOpacity>
@@ -230,6 +258,28 @@ export default function HomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
+        {/* Recent Activity Section */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Activity</Text>
+          </View>
+          {loadingActivity ? (
+            <ActivityIndicator size="small" color="#007AFF" />
+          ) : activityError ? (
+            <Text style={styles.errorText}>{activityError}</Text>
+          ) : recentActivityData.length === 0 ? (
+            <Text style={styles.noActivityText}>No recent activity found.</Text>
+          ) : (
+            recentActivityData.map(activity => (
+              <View key={activity.id} style={styles.activityCard}>
+                <Text style={styles.activityMessage}>{activity.message}</Text>
+                <Text style={styles.activityDetails}>Type: {activity.entityType}</Text>
+                <Text style={styles.activityDetails}>User: {activity.userName}</Text>
+                <Text style={styles.activityDetails}>Time: {activity.createdAt}</Text>
+              </View>
+            ))
+          )}
+        </View>
 
         {/* Recent Items */}
         <View style={styles.sectionContainer}>
@@ -353,6 +403,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10, // Add gap between icons
   },
   welcomeText: {
     fontSize: 24,
@@ -364,7 +415,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  settingsButton: {
+  iconButton: {
     padding: 8,
   },
   quickStatsContainer: {
@@ -698,5 +749,31 @@ const styles = StyleSheet.create({
   valueInsightText: {
     fontSize: 13,
     color: '#666',
+  },
+  activityCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginBottom: 10,
+    padding: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  activityMessage: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  activityDetails: {
+    fontSize: 13,
+    color: '#666',
+  },
+  noActivityText: {
+    textAlign: 'center',
+    color: '#666',
+    marginTop: 10,
   },
 });
