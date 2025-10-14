@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { collection, getDocs, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -105,29 +105,29 @@ export default function HomeScreen({ navigation }) {
   }, [items, ordersData]);
 
   useEffect(() => {
-    fetchRecentActivity();
-  }, []); // Fetch activity once on component mount
+    const activityRef = collection(db, 'activity');
+    const q = query(activityRef, orderBy('createdAt', 'desc'), limit(5)); // Fetch last 5 activities
 
-  const fetchRecentActivity = async () => {
-    setLoadingActivity(true);
-    setActivityError(null);
-    try {
-      const activityRef = collection(db, 'activity');
-      const q = query(activityRef, orderBy('createdAt', 'desc'), limit(5)); // Fetch last 5 activities
-      const querySnapshot = await getDocs(q);
-      const activities = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        createdAt: doc.data().createdAt ? new Date(doc.data().createdAt.toDate()).toLocaleString() : 'N/A'
-      }));
-      setRecentActivityData(activities);
-    } catch (err) {
-      console.error("Error fetching recent activity: ", err);
-      setActivityError("Failed to fetch activity. Please try again.");
-    } finally {
-      setLoadingActivity(false);
-    }
-  };
+    const unsubscribeActivity = onSnapshot(
+      q,
+      snapshot => {
+        const activities = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt ? new Date(doc.data().createdAt.toDate()).toLocaleString() : 'N/A'
+        }));
+        setRecentActivityData(activities);
+        setLoadingActivity(false);
+      },
+      error => {
+        console.error('Error fetching recent activity:', error);
+        setActivityError('Failed to load recent activity.');
+        setLoadingActivity(false);
+      },
+    );
+
+    return () => unsubscribeActivity();
+  }, []); // Empty dependency array to run once on mount and listen for real-time updates
 
   const calculateQuickStats = React.useCallback((itemsData, ordersData) => {
     const totalItems = itemsData.length;

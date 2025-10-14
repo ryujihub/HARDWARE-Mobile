@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 import { Camera, CameraView } from 'expo-camera';
 import firebase from 'firebase/compat/app';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { addDoc, collection, onSnapshot, query, serverTimestamp } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -17,9 +17,77 @@ import {
   View,
 } from 'react-native';
 import HelpModal from '../components/HelpModal'; // Import the new HelpModal component
-import { auth, db } from '../config/firebase';
+import { auth, db } from '../config/firebase'; // Ensure db is FIRESTORE_DB
 
 export default function InventoryScreen({ navigation }) {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    productCode: '',
+    category: '',
+    currentStock: 0,
+    minimumStock: 0,
+    price: 0,
+    unit: '',
+    createdAt: null,
+    lastUpdated: null,
+  });
+
+  // State for edit form
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editItem, setEditItem] = useState(null);
+
+  // Update permission state to include more detailed status
+  const [hasPermission, setHasPermission] = useState(null);
+  const [permissionError, setPermissionError] = useState(null);
+  const [scannerVisible, setScannerVisible] = useState(false);
+
+  const [isTorchOn, setIsTorchOn] = useState(false);
+  const [cameraType, setCameraType] = useState('back');
+  const [zoom, setZoom] = useState(0);
+  const [, setScanHistory] = useState([]);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualCode, setManualCode] = useState('');
+  const [username, setUsername] = useState(''); // State to store username
+
+  // Continuous scanning mode and duplicate-debounce cache
+  // Add new state for quick stock update
+  const [isQuickUpdateMode, setIsQuickUpdateMode] = useState(false);
+  const [quickUpdateAmount, setQuickUpdateAmount] = useState('0');
+  const [selectedItemForUpdate, setSelectedItemForUpdate] = useState(null);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  const categories = [
+    'Tools',
+    'Electrical',
+    'Plumbing',
+    'Carpentry',
+    'Paint',
+    'Hardware',
+    'Fasteners',
+    'Safety',
+    'Gardening',
+    'Automotive',
+    'Other',
+  ];
+
+  const units = [
+    'pcs',
+    'box',
+    'set',
+    'roll',
+    'meter',
+    'kg',
+    'liter',
+    'pack',
+    'pair',
+    'gallon',
+  ];
+
   useEffect(() => {
     const movementsRef = db.collection('stockMovements');
     const unsubscribeMovements = movementsRef.onSnapshot(async snapshot => {
@@ -82,63 +150,6 @@ export default function InventoryScreen({ navigation }) {
 
     return () => unsubscribeSales();
   }, []);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newItem, setNewItem] = useState({
-    name: '',
-    productCode: '',
-    category: '',
-    currentStock: 0,
-    minimumStock: 0,
-    price: 0,
-    unit: '',
-    createdAt: null,
-    lastUpdated: null,
-  });
-
-  // State for edit form
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [editItem, setEditItem] = useState(null);
-
-  // Update permission state to include more detailed status
-  const [hasPermission, setHasPermission] = useState(null);
-  const [permissionError, setPermissionError] = useState(null);
-  const [scannerVisible, setScannerVisible] = useState(false);
-
-  // cameraRef removed because it's not used directly; keep useRef import if needed later
-
-  const categories = ['Tools', 'Electrical', 'Plumbing', 'Carpentry', 'Paint', 'Hardware'];
-
-  const units = [
-    'pcs',
-    'rolls',
-    'meters',
-    'boxes',
-    'sets',
-    'pairs',
-    'kits',
-    'bundles',
-    'kg',
-    'liters',
-    'other',
-  ];
-
-  const [isTorchOn, setIsTorchOn] = useState(false);
-  const [cameraType, setCameraType] = useState('back');
-  const [zoom, setZoom] = useState(0);
-  const [, setScanHistory] = useState([]);
-  const [showManualInput, setShowManualInput] = useState(false);
-  const [manualCode, setManualCode] = useState('');
-
-  // Continuous scanning mode and duplicate-debounce cache
-  // Add new state for quick stock update
-  const [isQuickUpdateMode, setIsQuickUpdateMode] = useState(false);
-  const [quickUpdateAmount, setQuickUpdateAmount] = useState('0');
-  const [selectedItemForUpdate, setSelectedItemForUpdate] = useState(null);
-  const [showHelpModal, setShowHelpModal] = useState(false);
 
   // Update the permission request function
   const requestCameraPermission = async () => {
@@ -164,10 +175,30 @@ export default function InventoryScreen({ navigation }) {
     }
   };
 
-  // Update useEffect to handle permissions
+  // Update useEffect to handle permissions and load username
   useEffect(() => {
     requestCameraPermission();
     loadItems();
+
+    const user = auth.currentUser;
+    if (user) {
+      const loadUsername = async () => {
+        try {
+          if (user.displayName) {
+            setUsername(user.displayName);
+          } else {
+            const userDoc = await db.collection('users').doc(user.uid).get();
+            if (userDoc.exists) {
+              setUsername(userDoc.data().username || 'Unknown User');
+            }
+          }
+        } catch (e) {
+          console.error('Failed to load username:', e);
+          setUsername('Unknown User');
+        }
+      };
+      loadUsername();
+    }
   }, []);
 
   const loadItems = async () => {
@@ -301,7 +332,17 @@ export default function InventoryScreen({ navigation }) {
 
       console.log('Adding new item with data:', itemData);
 
-      await db.collection('inventory').add(itemData);
+      const docRef = await db.collection('inventory').add(itemData);
+
+      // Log activity
+      await addDoc(collection(db, 'activity'), {
+        message: `Added new item: ${newItem.name} (Code: ${newItem.productCode})`,
+        entityType: 'product',
+        entityId: docRef.id,
+        userId: user.uid,
+        userName: username,
+        createdAt: serverTimestamp(),
+      });
 
       setNewItem({
         name: '',
@@ -331,7 +372,20 @@ export default function InventoryScreen({ navigation }) {
         onPress: async () => {
           try {
             console.log('Deleting item with ID:', itemId);
+            const itemToDelete = items.find(item => item.id === itemId);
             await db.collection('inventory').doc(itemId).delete();
+
+            // Log activity
+            if (itemToDelete) {
+              await addDoc(collection(db, 'activity'), {
+                message: `Deleted item: ${itemToDelete.name} (Code: ${itemToDelete.productCode})`,
+                entityType: 'product',
+                entityId: itemId,
+                userId: auth.currentUser.uid,
+                userName: username,
+                createdAt: serverTimestamp(),
+              });
+            }
             Alert.alert('Success', 'Item deleted successfully!');
           } catch (error) {
             console.error('Error deleting item:', error);
@@ -366,6 +420,16 @@ export default function InventoryScreen({ navigation }) {
 
       const docRef = db.collection('inventory').doc(itemId);
       await docRef.update(updatedData);
+
+      // Log activity
+      await addDoc(collection(db, 'activity'), {
+        message: `Updated item: ${updatedFields.name} (Code: ${updatedFields.productCode})`,
+        entityType: 'product',
+        entityId: itemId,
+        userId: auth.currentUser.uid,
+        userName: username,
+        createdAt: serverTimestamp(),
+      });
 
       setShowEditForm(false);
       setEditItem(null);
@@ -510,12 +574,31 @@ export default function InventoryScreen({ navigation }) {
           currentStock: firebase.firestore.FieldValue.increment(delta),
           lastUpdated: new Date(),
         });
-      Alert.alert('Success', `Stock updated successfully! New stock: ${newStock}`);
 
-  // Reset quick update mode
-  setIsQuickUpdateMode(false);
-  setQuickUpdateAmount('0');
-  setSelectedItemForUpdate(null);
+      // Log activity
+      const updatedItem = items.find(item => item.id === itemId);
+      if (updatedItem) {
+        const message =
+          delta > 0
+            ? `Added ${delta} ${updatedItem.unit} to ${updatedItem.name} (Code: ${updatedItem.productCode}). New stock: ${updatedItem.currentStock + delta}`
+            : `Removed ${Math.abs(delta)} ${updatedItem.unit} from ${updatedItem.name} (Code: ${updatedItem.productCode}). New stock: ${updatedItem.currentStock + delta}`;
+
+        await addDoc(collection(db, 'activity'), {
+          message: message,
+          entityType: 'stock_update',
+          entityId: itemId,
+          userId: auth.currentUser.uid,
+          userName: username,
+          createdAt: serverTimestamp(),
+        });
+      }
+
+      Alert.alert('Success', `Stock updated successfully!`);
+
+      // Reset quick update mode
+      setIsQuickUpdateMode(false);
+      setQuickUpdateAmount('0');
+      setSelectedItemForUpdate(null);
     } catch (error) {
       console.error('Error updating stock:', error);
       Alert.alert('Error', 'Failed to update stock. Please try again.');
