@@ -6,6 +6,7 @@ import { Text } from 'react-native';
 import HomeScreen from '../screens/HomeScreen';
 import InventoryScreen from '../screens/InventoryScreen';
 import LoginScreen from '../screens/LoginScreen';
+import ProfileScreen from '../screens/ProfileScreen';
 import SalesDetails from '../screens/SalesDetails';
 import SettingsScreen from '../screens/SettingsScreen';
 import SignUpScreen from '../screens/SignUpScreen';
@@ -38,14 +39,6 @@ function MainTabs() {
           tabBarIcon: ({ color }) => <Text style={{ color }}>📦</Text>,
         }}
       />
-      <Tab.Screen
-        name="SettingsTab"
-        component={SettingsScreen}
-        options={{
-          tabBarLabel: 'Settings',
-          tabBarIcon: ({ color }) => <Text style={{ color }}>⚙️</Text>,
-        }}
-      />
     </Tab.Navigator>
   );
 }
@@ -73,6 +66,8 @@ export default function AppNavigator() {
           component={SalesDetails}
           options={{ title: 'Sales Details' }}
         />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+        <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'User Profile' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

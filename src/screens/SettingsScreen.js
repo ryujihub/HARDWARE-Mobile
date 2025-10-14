@@ -5,17 +5,15 @@ import {
   Alert,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { auth, db } from '../config/firebase';
 
 export default function SettingsScreen({ navigation }) {
   const [settings, setSettings] = useState({
-    lowStockAlerts: true,
     currency: '₱',
     refreshInterval: '1',
   });
@@ -95,18 +93,6 @@ export default function SettingsScreen({ navigation }) {
         </View>
 
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingLabel}>Low Stock Alerts</Text>
-            <Text style={styles.settingDescription}>Get notified when items are running low</Text>
-          </View>
-          <Switch
-            value={settings.lowStockAlerts}
-            onValueChange={value => setSettings({ ...settings, lowStockAlerts: value })}
-            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
-            thumbColor={settings.lowStockAlerts ? '#fff' : '#f4f3f4'}
-          />
-        </View>
 
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
