@@ -183,8 +183,8 @@ export default function HomeScreen({ navigation }) {
               <View>
                 <Text style={styles.welcomeText}>
                   Welcome Back!
-                  {username ? ` ${username}` : ''}
                 </Text>
+                {username ? <Text style={styles.usernameText}>{username}</Text> : null}
                 <Text style={styles.dateText}>
                   {new Date().toLocaleDateString('en-US', {
                     weekday: 'long',
@@ -403,12 +403,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10, // Add gap between icons
+    gap: 5, // Add gap between icons
   },
   welcomeText: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
+  },
+  usernameText: {
+    fontSize: 20, // Slightly smaller than "Welcome Back!"
+    color: '#333',
+    marginTop: 2, // Small margin from "Welcome Back!"
+    fontWeight: '500',
   },
   dateText: {
     fontSize: 14,
@@ -416,7 +422,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   iconButton: {
-    padding: 8,
+    padding: 3,
   },
   quickStatsContainer: {
     padding: 15,
@@ -616,7 +622,7 @@ const styles = StyleSheet.create({
   metricsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 5,
   },
   metricItem: {
     flex: 1,

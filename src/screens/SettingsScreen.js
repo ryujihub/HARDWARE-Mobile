@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -15,10 +15,8 @@ import { auth, db } from '../config/firebase';
 
 export default function SettingsScreen({ navigation }) {
   const [settings, setSettings] = useState({
-    emailNotifications: true,
     lowStockAlerts: true,
     currency: '₱',
-    lowStockThreshold: '10',
     refreshInterval: '1',
   });
   const [loading, setLoading] = useState(true);
@@ -96,20 +94,6 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.sectionTitle}>User Preferences</Text>
         </View>
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingLabel}>Email Notifications</Text>
-            <Text style={styles.settingDescription}>
-              Receive updates about your inventory via email
-            </Text>
-          </View>
-          <Switch
-            value={settings.emailNotifications}
-            onValueChange={value => setSettings({ ...settings, emailNotifications: value })}
-            trackColor={{ false: '#e0e0e0', true: '#007AFF' }}
-            thumbColor={settings.emailNotifications ? '#fff' : '#f4f3f4'}
-          />
-        </View>
 
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
@@ -142,24 +126,6 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.sectionTitle}>System Settings</Text>
         </View>
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingLabel}>Low Stock Threshold</Text>
-            <Text style={styles.settingDescription}>
-              Minimum number of items before triggering low stock alert
-            </Text>
-          </View>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={settings.lowStockThreshold}
-              onChangeText={value => setSettings({ ...settings, lowStockThreshold: value })}
-              keyboardType="numeric"
-              placeholder="Enter threshold"
-            />
-            <Text style={styles.inputUnit}>items</Text>
-          </View>
-        </View>
 
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
