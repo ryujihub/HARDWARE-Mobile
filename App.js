@@ -10,7 +10,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import InventoryScreen from './src/screens/InventoryScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import SignUpScreen from './src/screens/SignUpScreen';
+
 
 const Stack = createNativeStackNavigator();
 
@@ -86,7 +86,6 @@ export default function App() {
           // Non-authenticated stack
           <>
             <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="SignUp" component={SignUpScreen} options={{ headerShown: false }} />
           </>
         )}
       </Stack.Navigator>

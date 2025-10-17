@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,10 +14,37 @@ export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captchaText, setCaptchaText] = useState('');
+  const [captchaInput, setCaptchaInput] = useState('');
+  const [num1, setNum1] = useState(0);
+  const [num2, setNum2] = useState(0);
+
+  // Generate captcha numbers on component mount
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
+  const generateCaptcha = () => {
+    const number1 = Math.floor(Math.random() * 10) + 1;
+    const number2 = Math.floor(Math.random() * 10) + 1;
+    setNum1(number1);
+    setNum2(number2);
+    setCaptchaText(`${number1} + ${number2}`);
+    setCaptchaInput('');
+  };
 
   const handleLogin = async () => {
-    if (!email || !password) {
+    if (!email || !password || !captchaInput) {
       Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    // Validate captcha
+    const correctAnswer = num1 + num2;
+    const userAnswer = parseInt(captchaInput);
+    if (userAnswer !== correctAnswer) {
+      Alert.alert('Error', 'Incorrect captcha answer. Please try again.');
+      generateCaptcha(); // Generate new captcha on failure
       return;
     }
 
@@ -93,13 +120,31 @@ export default function LoginScreen({ navigation }) {
         autoComplete="password"
       />
 
+      {/* Captcha Section */}
+      <View style={styles.captchaContainer}>
+        <Text style={styles.captchaLabel}>Solve this math problem:</Text>
+        <View style={styles.captchaDisplay}>
+          <Text style={styles.captchaText}>{captchaText} = ?</Text>
+          <TouchableOpacity style={styles.refreshButton} onPress={generateCaptcha}>
+            <Text style={styles.refreshText}>↻</Text>
+          </TouchableOpacity>
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Enter the answer"
+          placeholderTextColor="#666666"
+          value={captchaInput}
+          onChangeText={setCaptchaInput}
+          keyboardType="numeric"
+          maxLength={2}
+        />
+      </View>
+
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.linkButton} onPress={() => navigation.navigate('SignUp')}>
-        <Text style={styles.linkText}>Don&apos;t have an account? Sign Up</Text>
-      </TouchableOpacity>
+
     </View>
   );
 }
@@ -147,5 +192,44 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     textAlign: 'center',
+  },
+  captchaContainer: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  captchaLabel: {
+    fontSize: 14,
+    color: '#333333',
+    marginBottom: 8,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  captchaDisplay: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e8e8e8',
+    padding: 12,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  captchaText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333333',
+    marginRight: 10,
+  },
+  refreshButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  refreshText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
