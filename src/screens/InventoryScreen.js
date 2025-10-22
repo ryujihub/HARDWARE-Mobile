@@ -19,7 +19,7 @@ import {
 import HelpModal from '../components/HelpModal'; // Import the new HelpModal component
 import { auth, db } from '../config/firebase'; // Ensure db is FIRESTORE_DB
 
-export default function InventoryScreen({ navigation }) {
+export default function InventoryScreen({ navigation, route }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -363,38 +363,7 @@ export default function InventoryScreen({ navigation }) {
     }
   };
 
-  const handleDeleteItem = async itemId => {
-    Alert.alert('Confirm Delete', 'Are you sure you want to delete this item?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            console.log('Deleting item with ID:', itemId);
-            const itemToDelete = items.find(item => item.id === itemId);
-            await db.collection('inventory').doc(itemId).delete();
 
-            // Log activity
-            if (itemToDelete) {
-              await addDoc(collection(db, 'activity'), {
-                message: `Deleted item: ${itemToDelete.name} (Code: ${itemToDelete.productCode})`,
-                entityType: 'product',
-                entityId: itemId,
-                userId: auth.currentUser.uid,
-                userName: username,
-                createdAt: serverTimestamp(),
-              });
-            }
-            Alert.alert('Success', 'Item deleted successfully!');
-          } catch (error) {
-            console.error('Error deleting item:', error);
-            Alert.alert('Error', 'Failed to delete item');
-          }
-        },
-      },
-    ]);
-  };
 
   // New function to update an existing item with variance recalculation
   const handleUpdateItem = async (itemId, updatedFields) => {
@@ -1332,9 +1301,6 @@ export default function InventoryScreen({ navigation }) {
         data={filteredItems}
         keyExtractor={item => item.id}
         renderItem={({ item }) => {
-          // Prefer stored fields if present (newer records); otherwise compute
-          const shortageQty = item.shortageQty ?? null;
-          const surplusQty = item.surplusQty ?? null;
           return (
             <View style={styles.itemCard}>
               <View style={styles.itemHeader}>
@@ -1348,8 +1314,16 @@ export default function InventoryScreen({ navigation }) {
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={styles.itemCode}>#{item.productCode}</Text>
-                 
-                   
+                  {item.inventoryVariance < 0 && (
+                    <View style={styles.shortageBadge}>
+                      <Text style={styles.badgeText}>Shortage: {Math.abs(item.inventoryVariance)} {item.unit}</Text>
+                    </View>
+                  )}
+                  {item.inventoryVariance > 0 && (
+                    <View style={styles.surplusBadge}>
+                      <Text style={styles.badgeText}>Surplus: {item.inventoryVariance} {item.unit}</Text>
+                    </View>
+                  )}
                 </View>
               </View>
 
@@ -1381,17 +1355,6 @@ export default function InventoryScreen({ navigation }) {
                   <Text style={styles.lastUpdated}>
                     Updated: {item.lastUpdated?.toDate().toLocaleDateString()}
                   </Text>
-                  <View style={styles.actionButtons}>
-                    
-                     
-                    <TouchableOpacity
-                      style={[styles.actionButton, styles.deleteButton]}
-                      onPress={() => handleDeleteItem(item.id)}
-                    >
-                      <Ionicons name="trash" size={18} color="#fff" />
-                      <Text style={styles.actionButtonText}>Delete</Text>
-                    </TouchableOpacity>
-                  </View>
                 </View>
               </View>
             </View>
@@ -1851,9 +1814,7 @@ const styles = StyleSheet.create({
   editButton: {
     backgroundColor: '#007AFF',
   },
-  deleteButton: {
-    backgroundColor: '#FF3B30',
-  },
+
   actionButtonText: {
     color: 'white',
     fontSize: 13,

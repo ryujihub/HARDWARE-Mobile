@@ -8,6 +8,7 @@ import InventoryScreen from '../screens/InventoryScreen';
 import LoginScreen from '../screens/LoginScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import SalesDetails from '../screens/SalesDetails';
+import SalesReport from '../screens/SalesReport';
 import SettingsScreen from '../screens/SettingsScreen';
 
 
@@ -67,6 +68,7 @@ export default function AppNavigator() {
         />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
         <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'User Profile' }} />
+        <Stack.Screen name="SalesReport" component={SalesReport} options={{ title: 'Sales Report' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

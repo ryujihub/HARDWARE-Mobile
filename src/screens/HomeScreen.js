@@ -25,6 +25,7 @@ export default function HomeScreen({ navigation }) {
     outOfStock: 0,
     highValue: 0,
     totalSales: 0,
+    totalLostAmount: 0,
     topCategory: '',
     topSellingItem: '',
     monthlyGrowth: 0,
@@ -38,6 +39,9 @@ export default function HomeScreen({ navigation }) {
   const [recentActivityData, setRecentActivityData] = useState([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activityError, setActivityError] = useState(null);
+  const [showOutOfStockModal, setShowOutOfStockModal] = useState(false);
+  const [showSalesModal, setShowSalesModal] = useState(false);
+  const [debugInfo, setDebugInfo] = useState(''); // For debugging
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -70,7 +74,13 @@ export default function HomeScreen({ navigation }) {
     // Store raw items from snapshot; compute heavy stats only on demand or when autoCompute is enabled
     const unsubscribe = q.onSnapshot(
       snapshot => {
-        const itemsArray = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const itemsArray = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+          };
+        });
         setItems(itemsArray);
         setLoading(false);
         calculateQuickStats(itemsArray, ordersData);
@@ -92,7 +102,12 @@ export default function HomeScreen({ navigation }) {
     const unsubscribeOrders = onSnapshot(
       ordersQuery,
       snapshot => {
-        const fetchedOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const fetchedOrders = snapshot.docs.map(doc => {
+          const data = doc.data();
+          console.log('Order data:', { id: doc.id, ...data });
+          return { id: doc.id, ...data };
+        });
+        console.log('Total orders fetched:', fetchedOrders.length);
         setOrdersData(fetchedOrders);
         calculateQuickStats(items, fetchedOrders);
       },
@@ -134,6 +149,14 @@ export default function HomeScreen({ navigation }) {
     const totalValue = itemsData.reduce((sum, item) => sum + (item.price || 0) * (item.currentStock || 0), 0);
     const outOfStock = itemsData.filter(item => item.currentStock === 0).length;
     const totalSales = ordersData.reduce((sum, order) => sum + (order.total || 0), 0);
+    const totalLostAmount = itemsData.reduce((sum, item) => {
+      const variance = item.inventoryVariance || 0;
+      const cost = Number(item.cost) || Number(item.sellingPrice) || Number(item.price) || 0;
+      if (variance < 0) {
+        return sum + (Math.abs(variance) * cost);
+      }
+      return sum;
+    }, 0);
 
     setStats(prev => ({
       ...prev,
@@ -141,6 +164,7 @@ export default function HomeScreen({ navigation }) {
       totalValue,
       outOfStock,
       totalSales,
+      totalLostAmount,
     }));
   }, []);
 
@@ -148,6 +172,19 @@ export default function HomeScreen({ navigation }) {
     setRefreshing(true);
     setRefreshing(false);
   }, []);
+
+  const getStatusStyle = (status) => {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return { color: '#2E7D32', backgroundColor: '#E8F5E9' };
+      case 'pending':
+        return { color: '#F57C00', backgroundColor: '#FFF3E0' };
+      case 'cancelled':
+        return { color: '#C62828', backgroundColor: '#FFEBEE' };
+      default:
+        return { color: '#666', backgroundColor: '#f5f5f5' };
+    }
+  };
 
   if (loading) {
     return (
@@ -223,20 +260,29 @@ export default function HomeScreen({ navigation }) {
               <Text style={styles.quickStatValue}>₱{stats.totalValue.toFixed(2)}</Text>
               <Text style={styles.quickStatLabel}>Total Value</Text>
             </View>
-            <View
+            <TouchableOpacity
               style={[
                 styles.quickStatCard,
                 stats.outOfStock > 0 ? styles.dangerCard : styles.infoCard,
               ]}
+              onPress={() => setShowOutOfStockModal(true)}
             >
               <Ionicons name="close-circle-outline" size={24} color="#fff" />
               <Text style={styles.quickStatValue}>{stats.outOfStock}</Text>
               <Text style={styles.quickStatLabel}>Out of Stock</Text>
-            </View>
-            <View style={[styles.quickStatCard, styles.infoCard]}>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.quickStatCard, styles.infoCard]}
+              onPress={() => navigation.navigate('SalesReport')}
+            >
               <Ionicons name="wallet-outline" size={24} color="#fff" />
               <Text style={styles.quickStatValue}>₱{stats.totalSales.toFixed(2)}</Text>
               <Text style={styles.quickStatLabel}>Total Revenue</Text>
+            </TouchableOpacity>
+            <View style={[styles.quickStatCard, styles.dangerCard]}>
+              <Ionicons name="trending-down-outline" size={24} color="#fff" />
+              <Text style={styles.quickStatValue}>₱{stats.totalLostAmount.toFixed(2)}</Text>
+              <Text style={styles.quickStatLabel}>Total Lost Amount</Text>
             </View>
           </View>
         </View>
@@ -281,69 +327,65 @@ export default function HomeScreen({ navigation }) {
           )}
         </View>
 
-        {/* Recent Items */}
-        <View style={styles.sectionContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Items</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Inventory')}>
-              <Text style={styles.sectionAction}>View All</Text>
-            </TouchableOpacity>
-          </View>
-          {items.slice(0, 5).map(item => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.recentItemCard}
-              onPress={() => navigation.navigate('Inventory')}
-            >
-              <View style={styles.recentItemContent}>
-                <View style={styles.recentItemMain}>
-                  <Text style={styles.recentItemName}>{item.name}</Text>
-                  <Text style={styles.recentItemCode}>#{item.productCode}</Text>
-                  <View style={styles.recentItemDetails}>
-                    <View style={styles.recentItemDetail}>
-                      <Ionicons name="cube-outline" size={16} color="#666" />
-                      <Text style={styles.recentItemDetailText}>
-                        {item.currentStock} {item.unit}
-                      </Text>
-                    </View>
-                    <View style={styles.recentItemDetail}>
-                      <Ionicons name="pricetag-outline" size={16} color="#666" />
-                      <Text style={styles.recentItemDetailText}>₱{item.price?.toFixed(2)}</Text>
-                    </View>
-                  </View>
-                </View>
-                <View style={styles.recentItemSide}>
-                  {item.category && (
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{item.category}</Text>
-                    </View>
-                  )}
-                  <View
-                    style={[
-                      styles.stockStatus,
-                      item.currentStock === 0
-                        ? styles.stockStatusEmpty
-                        : item.currentStock < item.minimumStock
-                          ? styles.stockStatusLow
-                          : styles.stockStatusGood,
-                    ]}
-                  >
-                    <Text style={styles.stockStatusText}>
-                      {item.currentStock === 0
-                        ? 'Empty'
-                        : item.currentStock < item.minimumStock
-                          ? 'Low'
-                          : 'Good'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+
       </ScrollView>
 
       <HelpModal visible={showHelpModal} onClose={() => setShowHelpModal(false)} />
+
+      {/* Out of Stock Modal */}
+      {showOutOfStockModal && (
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Out of Stock Items</Text>
+              <TouchableOpacity
+                style={styles.modalCloseButton}
+                onPress={() => setShowOutOfStockModal(false)}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              {items.filter(item => item.currentStock === 0).length === 0 ? (
+                <Text style={styles.noItemsText}>No items are currently out of stock!</Text>
+              ) : (
+                <ScrollView style={styles.outOfStockList}>
+                  {items.filter(item => item.currentStock === 0).map(item => (
+                    <View key={item.id} style={styles.outOfStockItem}>
+                      <View style={styles.itemInfo}>
+                        <Text style={styles.itemName}>{item.name}</Text>
+                        <Text style={styles.itemCode}>#{item.productCode}</Text>
+                        <Text style={styles.itemDetails}>
+                          Min Stock: {item.minimumStock} {item.unit}
+                        </Text>
+                        <Text style={styles.itemPrice}>₱{item.price?.toFixed(2)}</Text>
+                      </View>
+                      <View style={styles.itemStatus}>
+                        <Text style={styles.outOfStockLabel}>OUT OF STOCK</Text>
+                      </View>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+
+            <View style={styles.modalFooter}>
+              <TouchableOpacity
+                style={styles.modalButton}
+                onPress={() => {
+                  setShowOutOfStockModal(false);
+                  navigation.navigate('Inventory');
+                }}
+              >
+                <Text style={styles.modalButtonText}>Go to Inventory</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
+
+
     </View>
   );
 }
@@ -435,7 +477,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   quickStatCard: {
-    width: '48%', // Roughly half, accounting for gap
+    width: '45%', // Adjusted for 5 cards: 3 on first row, 2 on second
     padding: 15,
     borderRadius: 12,
     backgroundColor: '#007AFF',
@@ -519,82 +561,7 @@ const styles = StyleSheet.create({
     color: '#007AFF',
     fontWeight: '500',
   },
-  recentItemCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 10,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  recentItemContent: {
-    padding: 15,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  recentItemMain: {
-    flex: 1,
-  },
-  recentItemName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  recentItemCode: {
-    fontSize: 13,
-    color: '#666',
-    fontFamily: 'monospace',
-    marginTop: 2,
-  },
-  recentItemDetails: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 8,
-  },
-  recentItemDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  recentItemDetailText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  recentItemSide: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  categoryBadge: {
-    backgroundColor: '#E8F2FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  categoryText: {
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  stockStatus: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  stockStatusGood: {
-    backgroundColor: '#E8F5E9',
-  },
-  stockStatusLow: {
-    backgroundColor: '#FFF3E0',
-  },
-  stockStatusEmpty: {
-    backgroundColor: '#FFEBEE',
-  },
-  stockStatusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
+
   metricsContainer: {
     gap: 15,
   },
@@ -781,5 +748,249 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     marginTop: 10,
+  },
+  // Modal Styles
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    margin: 20,
+    maxHeight: '70%',
+    width: '90%',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalCloseButton: {
+    padding: 5,
+  },
+  modalBody: {
+    flex: 1,
+    marginBottom: 20,
+  },
+  outOfStockList: {
+    maxHeight: 300,
+  },
+  outOfStockItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  itemCode: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  itemDetails: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 2,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
+  itemStatus: {
+    alignItems: 'center',
+  },
+  outOfStockLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#C62828',
+    backgroundColor: '#FFEBEE',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  noItemsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#666',
+    padding: 30,
+  },
+  modalFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 15,
+  },
+  modalButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // Sales Modal Styles
+  revenueSummary: {
+    backgroundColor: '#E8F5E9',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  summaryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2E7D32',
+    marginBottom: 8,
+  },
+  summaryAmount: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+    marginBottom: 4,
+  },
+  summarySubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  salesList: {
+    maxHeight: 250,
+  },
+  salesItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  salesInfo: {
+    flex: 1,
+  },
+  salesDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  salesDetails: {
+    fontSize: 12,
+    color: '#666',
+  },
+  salesAmount: {
+    alignItems: 'flex-end',
+  },
+  salesAmountText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2E7D32',
+  },
+  moreItemsText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#999',
+    marginTop: 10,
+    fontStyle: 'italic',
+  },
+  // Additional Sales Modal Styles
+  salesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  salesOrderId: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  customerName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 4,
+  },
+  itemsList: {
+    marginBottom: 8,
+  },
+  itemDetail: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 2,
+  },
+  orderMeta: {
+    flexDirection: 'row',
+    gap: 8,
+    alignItems: 'center',
+  },
+  paymentMethod: {
+    fontSize: 11,
+    color: '#007AFF',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  orderStatus: {
+    fontSize: 11,
+    fontWeight: '600',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  salesTime: {
+    fontSize: 11,
+    color: '#999',
+    marginTop: 2,
+  },
+  moreOrdersText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#999',
+    marginTop: 10,
+    fontStyle: 'italic',
   },
 });
