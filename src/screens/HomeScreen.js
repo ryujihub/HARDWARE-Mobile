@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
@@ -13,7 +14,8 @@ import {
 import HelpModal from '../components/HelpModal'; // Import the new HelpModal component
 import { auth, db } from '../config/firebase'; // Assuming firebase.js exports FIRESTORE_DB
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen() {
+  const navigation = useNavigation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -270,6 +272,7 @@ export default function HomeScreen({ navigation }) {
               <Ionicons name="close-circle-outline" size={24} color="#fff" />
               <Text style={styles.quickStatValue}>{stats.outOfStock}</Text>
               <Text style={styles.quickStatLabel}>Out of Stock</Text>
+              <Text style={styles.tapToSeeText}>Tap to see list</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.quickStatCard, styles.infoCard]}
@@ -278,6 +281,7 @@ export default function HomeScreen({ navigation }) {
               <Ionicons name="wallet-outline" size={24} color="#fff" />
               <Text style={styles.quickStatValue}>₱{stats.totalSales.toFixed(2)}</Text>
               <Text style={styles.quickStatLabel}>Total Revenue</Text>
+              <Text style={styles.tapToSeeText}>Tap to see analytics</Text>
             </TouchableOpacity>
             <View style={[styles.quickStatCard, styles.dangerCard]}>
               <Ionicons name="trending-down-outline" size={24} color="#fff" />
@@ -507,6 +511,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     marginTop: 4,
+  },
+  tapToSeeText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+    marginTop: 2,
+    textAlign: 'center',
   },
   quickActionsContainer: {
     padding: 15,

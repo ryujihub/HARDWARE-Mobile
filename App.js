@@ -9,6 +9,7 @@ import InventoryIcon from './assets/images/inventory-icon.png';
 import HomeScreen from './src/screens/HomeScreen';
 import InventoryScreen from './src/screens/InventoryScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import SalesReport from './src/screens/SalesReport';
 import SettingsScreen from './src/screens/SettingsScreen';
 
 
@@ -71,6 +72,14 @@ export default function App() {
                 headerLeft: () => (
                   <Image source={InventoryIcon} style={{ width: 24, height: 24, marginLeft: 15, tintColor: '#fff' }} />
                 ),
+              }}
+            />
+
+            <Stack.Screen
+              name="SalesReport"
+              component={SalesReport}
+              options={{
+                title: 'Sales Report',
               }}
             />
 

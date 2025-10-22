@@ -15,7 +15,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-function MainTabs() {
+function MainTabs({ navigation }) {
   return (
     <Tab.Navigator
       screenOptions={{
