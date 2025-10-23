@@ -38,10 +38,7 @@ const HelpModal = ({ visible, onClose }) => {
               This section explains how to perform key actions within the Inventory screen.
             </Text>
 
-            <Text style={styles.subSectionTitle}>Adding New Items</Text>
-            <Text style={styles.sectionContent}>
-              To add a new item, tap the "<Text style={{ fontWeight: 'bold' }}>Add Item</Text>" button in the header. Fill in the item's name, product code, category, stock levels, price, and unit. You can also use the scanner to input the product code.
-            </Text>
+
 
             <Text style={styles.subSectionTitle}>Deleting Items</Text>
             <Text style={styles.sectionContent}>
@@ -50,7 +47,7 @@ const HelpModal = ({ visible, onClose }) => {
 
             <Text style={styles.subSectionTitle}>Using the Barcode Scanner</Text>
             <Text style={styles.sectionContent}>
-              The barcode scanner can be accessed from the "Add Item" or "Edit Item" forms, or directly via the "<Text style={{ fontWeight: 'bold' }}>Scan Item Barcode</Text>" button in Quick Stock Update mode. Point your camera at a barcode to scan it.
+              The barcode scanner can be accessed from the "Edit Item" forms, or directly via the "<Text style={{ fontWeight: 'bold' }}>Scan Item Barcode</Text>" button in Quick Stock Update mode. Point your camera at a barcode to scan it.
             </Text>
 
             <Text style={styles.subSectionTitle}>Quick Stock Update</Text>

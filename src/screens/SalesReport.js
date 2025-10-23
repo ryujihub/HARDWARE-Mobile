@@ -55,8 +55,8 @@ export default function SalesReport({ navigation }) {
 
     // Status breakdown - Check multiple possible field names
     const statusBreakdown = filteredOrders.reduce((acc, order) => {
-      // Try different possible status field names
-      const status = order.status || order.orderStatus || order.state || 'Unknown';
+      // Try different possible status field names, default to 'completed' if not set
+      const status = (order.status || order.orderStatus || order.state || 'completed').toLowerCase();
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
@@ -443,7 +443,7 @@ export default function SalesReport({ navigation }) {
                     </Text>
                     {order.status && (
                       <Text style={[styles.orderStatus, getStatusStyle(order.status)]}>
-                        {order.status}
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()}
                       </Text>
                     )}
                   </View>
