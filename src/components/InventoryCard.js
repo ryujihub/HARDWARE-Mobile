@@ -13,7 +13,7 @@ export default function InventoryCard({ item }) {
 
   const getStockStatus = () => {
     const currentStock = item.currentStock || 0;
-    const threshold = item.minimumStock || 0;
+    const threshold = item.reorderPoint || 0;
 
     if (currentStock === 0) {
       return { label: 'Out of Stock', color: theme.colors.error, backgroundColor: theme.colors.errorContainer };
