@@ -98,15 +98,15 @@ export default function InventoryScreenMaterial({ navigation, route }) {
             case 'inStock':
                 filtered = filtered.filter(item => {
                     const currentStock = item.currentStock || 0;
-                    const threshold = item.minimumStock || 0;
-                    return currentStock > threshold;
+                    const threshold = item.reorderPoint || item.minimumStock || 0;
+                    return currentStock >= threshold && currentStock > 0;
                 });
                 break;
             case 'lowStock':
                 filtered = filtered.filter(item => {
                     const currentStock = item.currentStock || 0;
-                    const threshold = item.minimumStock || 0;
-                    return currentStock > 0 && currentStock <= threshold;
+                    const threshold = item.reorderPoint || item.minimumStock || 0;
+                    return currentStock > 0 && currentStock < threshold;
                 });
                 break;
             case 'outOfStock':
