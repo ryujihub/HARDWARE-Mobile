@@ -1,16 +1,17 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
+import { PaperProvider } from 'react-native-paper';
 import { auth } from './src/config/firebase';
+import { lightTheme } from './src/theme/theme';
 
 // Import screens
-import InventoryIcon from './assets/images/inventory-icon.png';
-import HomeScreen from './src/screens/HomeScreen';
-import InventoryScreen from './src/screens/InventoryScreen';
-import LoginScreen from './src/screens/LoginScreen';
-import SalesReport from './src/screens/SalesReport';
-import SettingsScreen from './src/screens/SettingsScreen';
+import HomeScreenMaterial from './src/screens/HomeScreenMaterial';
+import InventoryScreenMaterial from './src/screens/InventoryScreenMaterial';
+import LoginScreenMaterial from './src/screens/LoginScreenMaterial';
+import SalesReportMaterial from './src/screens/SalesReportMaterial';
+import SettingsScreenMaterial from './src/screens/SettingsScreenMaterial';
 
 
 const Stack = createNativeStackNavigator();
@@ -37,67 +38,90 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: '#007AFF',
-          },
-          headerTintColor: '#fff',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      >
-        {user ? (
-          // Authenticated stack
-          <>
-            <Stack.Screen
-              name="Home"
-              component={HomeScreen}
-              options={{
-                title: 'Dashboard',
-                headerRight: () => (
-                  <TouchableOpacity onPress={() => auth.signOut()} style={{ marginRight: 15 }}>
-                    <Text style={{ color: '#fff', fontWeight: 'bold' }}>Logout</Text>
-                  </TouchableOpacity>
-                ),
-              }}
-            />
-            <Stack.Screen
-              name="Inventory"
-              component={InventoryScreen}
-              options={{
-                title: 'Inventory Management',
-                headerLeft: () => (
-                  <Image source={InventoryIcon} style={{ width: 24, height: 24, marginLeft: 15, tintColor: '#fff' }} />
-                ),
-              }}
-            />
+    <PaperProvider theme={lightTheme}>
+      <NavigationContainer>
+        <Stack.Navigator
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: lightTheme.colors.primary,
+            },
+            headerTintColor: lightTheme.colors.onPrimary,
+            headerTitleStyle: {
+              fontWeight: 'bold',
+            },
+          }}
+        >
+          {user ? (
+            // Authenticated stack
+            <>
+              <Stack.Screen
+                name="Home"
+                component={HomeScreenMaterial}
+                options={{
+                  title: 'Dashboard',
+                  headerRight: () => (
+                    <TouchableOpacity onPress={() => auth.signOut()} style={{ marginRight: 15 }}>
+                      <Text style={{ color: '#fff', fontWeight: 'bold' }}>Logout</Text>
+                    </TouchableOpacity>
+                  ),
+                }}
+              />
+              <Stack.Screen
+                name="Inventory"
+                component={InventoryScreenMaterial}
+                options={({ navigation }) => ({
+                  title: 'Stock Monitoring',
+                  headerLeft: () => (
+                    <TouchableOpacity
+                      onPress={() => navigation.goBack()}
+                      style={{ marginLeft: 15 }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+                    </TouchableOpacity>
+                  ),
+                })}
+              />
 
-            <Stack.Screen
-              name="SalesReport"
-              component={SalesReport}
-              options={{
-                title: 'Sales Report',
-              }}
-            />
+              <Stack.Screen
+                name="SalesReport"
+                component={SalesReportMaterial}
+                options={({ navigation }) => ({
+                  title: 'Sales Analytics',
+                  headerLeft: () => (
+                    <TouchableOpacity
+                      onPress={() => navigation.goBack()}
+                      style={{ marginLeft: 15 }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+                    </TouchableOpacity>
+                  ),
+                })}
+              />
 
-            <Stack.Screen
-              name="Settings"
-              component={SettingsScreen}
-              options={{
-                title: 'Settings',
-              }}
-            />
-          </>
-        ) : (
-          // Non-authenticated stack
-          <>
-            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+              <Stack.Screen
+                name="Settings"
+                component={SettingsScreenMaterial}
+                options={({ navigation }) => ({
+                  title: 'Settings',
+                  headerLeft: () => (
+                    <TouchableOpacity
+                      onPress={() => navigation.goBack()}
+                      style={{ marginLeft: 15 }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+                    </TouchableOpacity>
+                  ),
+                })}
+              />
+            </>
+          ) : (
+            // Non-authenticated stack
+            <>
+              <Stack.Screen name="Login" component={LoginScreenMaterial} options={{ headerShown: false }} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
   );
 }

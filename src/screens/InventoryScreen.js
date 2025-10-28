@@ -240,7 +240,7 @@ export default function InventoryScreen({ navigation, route }) {
   // Filter items based on search query and selected category
   const filteredItems = items.filter(item => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.productCode.toLowerCase().includes(searchQuery.toLowerCase());
+      item.productCode.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
@@ -424,16 +424,16 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   searchBarContainer: {
-  flex: 1,
-  flexDirection: 'row',
-  alignItems: 'center',
-  backgroundColor: '#fff',
-  borderRadius: 12,
-  paddingHorizontal: 14,
-  height: 48,
-  borderWidth: 1,
-  borderColor: '#e6e6e6',
-  elevation: 1,
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#e6e6e6',
+    elevation: 1,
   },
   searchIcon: {
     marginRight: 8,
