@@ -2,7 +2,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import 'react-native-gesture-handler';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { auth, onAuthStateChanged } from './src/config/firebase';
 

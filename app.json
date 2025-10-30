@@ -7,7 +7,7 @@
     "icon": "./assets/images/logo.png",
     "scheme": "inventorysystem",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+      "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.andreyryuji0909.inventory",
@@ -46,8 +46,7 @@
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes."
         }
-      ],
-      "expo-web-browser"
+        ]
     ],
     "experiments": {
       "typedRoutes": true
