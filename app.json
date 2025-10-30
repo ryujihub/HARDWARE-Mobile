@@ -7,7 +7,6 @@
     "icon": "./assets/images/logo.png",
     "scheme": "inventorysystem",
     "userInterfaceStyle": "automatic",
-      "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.andreyryuji0909.inventory",
@@ -20,7 +19,7 @@
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
+
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
