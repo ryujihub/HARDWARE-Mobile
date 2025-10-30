@@ -359,7 +359,7 @@ export default function SalesReport({ navigation }) {
                   <View style={styles.productDetails}>
                     <Text style={styles.productName}>{product.name}</Text>
                     <Text style={styles.productStats}>
-                      {product.quantity} sold • ₱{product.price.toFixed(2)} each
+                      {product.quantity} sold - ₱{product.price.toFixed(2)} each
                     </Text>
                   </View>
                 </View>
@@ -427,12 +427,12 @@ export default function SalesReport({ navigation }) {
                   {order.items && order.items.length > 0 && (
                     <View style={styles.itemsContainer}>
                       {order.items.slice(0, 2).map((item, index) => (
-                        <Text key={index} style={styles.orderItem}>
-                          • {item.name || item.productName || 'Item'} × {item.quantity || 1}
+                          <Text key={index} style={styles.orderItem}>
+                          - {item.name || item.productName || 'Item'} × {item.quantity || 1}
                         </Text>
                       ))}
                       {order.items.length > 2 && (
-                        <Text style={styles.orderItem}>• ... and {order.items.length - 2} more items</Text>
+                        <Text style={styles.orderItem}>- ... and {order.items.length - 2} more items</Text>
                       )}
                     </View>
                   )}

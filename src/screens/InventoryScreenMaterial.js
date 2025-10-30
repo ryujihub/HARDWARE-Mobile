@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import {
@@ -29,8 +30,6 @@ export default function InventoryScreenMaterial({ navigation, route }) {
     // Get unique categories from items
     const categories = [...new Set(items.map(item => item.category).filter(Boolean))];
 
-
-
     useEffect(() => {
         loadItems();
     }, []);
@@ -42,15 +41,13 @@ export default function InventoryScreenMaterial({ navigation, route }) {
                 throw new Error('No user logged in');
             }
 
-            const itemsRef = db.collection('inventory');
-            const userItemsQuery = itemsRef.where('userId', '==', user.uid);
+            const itemsRef = collection(db, 'inventory');
+            const userItemsQuery = query(itemsRef, where('userId', '==', user.uid));
 
-            const unsubscribe = userItemsQuery.onSnapshot(
+            const unsubscribe = onSnapshot(
+                userItemsQuery,
                 snapshot => {
-                    const itemsArray = snapshot.docs.map(doc => ({
-                        id: doc.id,
-                        ...doc.data(),
-                    }));
+                    const itemsArray = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
                     setItems(itemsArray);
                     setLoading(false);
@@ -134,8 +131,6 @@ export default function InventoryScreenMaterial({ navigation, route }) {
         return filtered;
     }, [items, searchQuery, selectedCategory, stockFilter, sortBy]);
 
-
-
     if (loading) {
         return (
             <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -149,8 +144,6 @@ export default function InventoryScreenMaterial({ navigation, route }) {
 
     return (
         <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
-            
-
             {/* Filters */}
             {showFilters && (
                 <InventoryFilters

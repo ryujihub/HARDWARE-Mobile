@@ -1,15 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, doc, getDoc, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import HelpModal from '../components/HelpModal'; // Import the new HelpModal component
 import { auth, db } from '../config/firebase'; // Assuming firebase.js exports FIRESTORE_DB
@@ -59,8 +59,9 @@ export default function HomeScreen() {
         if (user.displayName) {
           setUsername(user.displayName);
         } else {
-          const userDoc = await db.collection('users').doc(user.uid).get();
-          if (userDoc.exists) {
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
             setUsername(userDoc.data().username || '');
           }
         }
@@ -70,19 +71,17 @@ export default function HomeScreen() {
     };
     loadUsername();
 
-    const itemsRef = db.collection('inventory');
-    const q = itemsRef.where('userId', '==', user.uid);
+    const itemsRef = collection(db, 'inventory');
+    const q = query(itemsRef, where('userId', '==', user.uid));
 
     // Store raw items from snapshot; compute heavy stats only on demand or when autoCompute is enabled
-    const unsubscribe = q.onSnapshot(
+    const unsubscribe = onSnapshot(
+      q,
       snapshot => {
-        const itemsArray = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-          };
-        });
+        const itemsArray = snapshot.docs.map(d => ({
+          id: d.id,
+          ...d.data(),
+        }));
         setItems(itemsArray);
         setLoading(false);
         calculateQuickStats(itemsArray, ordersData);

@@ -1,7 +1,16 @@
-import 'firebase/compat/analytics';
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
+import { initializeApp } from 'firebase/app';
+import {
+    createUserWithEmailAndPassword,
+    onAuthStateChanged as firebaseOnAuthStateChanged,
+    signOut as firebaseSignOut,
+    getAuth,
+    signInWithEmailAndPassword,
+} from 'firebase/auth';
+import {
+    doc,
+    getDoc,
+    getFirestore,
+} from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -15,28 +24,16 @@ const firebaseConfig = {
   measurementId: 'G-Y4ZHE3GBN5',
 };
 
-// Initialize Firebase
-try {
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-    console.log('Firebase initialized successfully');
-  } else {
-    firebase.app();
-    console.log('Firebase already initialized');
-  }
-} catch (error) {
-  console.error('Firebase initialization error:', error);
-}
+// Initialize Firebase (modular)
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Get Auth and Firestore instances
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// Authentication functions
+// Authentication helper wrappers using modular API
 export const signIn = async (email, password) => {
   try {
     console.log('Starting sign in process...');
-    const userCredential = await auth.signInWithEmailAndPassword(email, password);
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log('Sign in successful:', userCredential.user.uid);
     return userCredential.user;
   } catch (error) {
@@ -48,7 +45,7 @@ export const signIn = async (email, password) => {
 export const signUp = async (email, password) => {
   try {
     console.log('Starting sign up process...');
-    const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     console.log('Sign up successful:', userCredential.user.uid);
     return userCredential.user;
   } catch (error) {
@@ -59,7 +56,7 @@ export const signUp = async (email, password) => {
 
 export const signOut = async () => {
   try {
-    await auth.signOut();
+    await firebaseSignOut(auth);
     console.log('Sign out successful');
   } catch (error) {
     console.error('Sign out error:', error);
@@ -67,20 +64,15 @@ export const signOut = async () => {
   }
 };
 
-// Test auth state
-auth.onAuthStateChanged(user => {
-  if (user) {
-    console.log('Auth state changed: User is signed in', user.uid);
-  } else {
-    console.log('Auth state changed: User is signed out');
-  }
-});
+// Expose onAuthStateChanged wrapper
+export const onAuthStateChanged = (cb) => firebaseOnAuthStateChanged(auth, cb);
 
-// Test database connection
+// Test database connection (modular)
 export const testDatabaseConnection = async () => {
   try {
-  await db.collection('test').doc('connection-test').get();
-  console.log('Database connection successful!');
+    const ref = doc(db, 'test', 'connection-test');
+    await getDoc(ref);
+    console.log('Database connection successful!');
     return true;
   } catch (error) {
     console.error('Database connection failed:', error);

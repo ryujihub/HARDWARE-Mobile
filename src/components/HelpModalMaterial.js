@@ -29,16 +29,16 @@ const HelpModalMaterial = ({ visible, onClose }) => {
               Dashboard Overview
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ fontWeight: 'bold' }}>Total Items:</Text> Shows the complete count of inventory items in your hardware store.
+              <Text>{"• "}<Text style={{ fontWeight: 'bold' }}>Total Items:</Text>{" Shows the complete count of inventory items in your hardware store."}</Text>
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ fontWeight: 'bold' }}>Total Value:</Text> Current monetary worth of all inventory (₱ price × stock quantity).
+              <Text>{"• "}<Text style={{ fontWeight: 'bold' }}>Total Value:</Text>{" Current monetary worth of all inventory (₱ price × stock quantity)."}</Text>
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ fontWeight: 'bold' }}>Out of Stock:</Text> Items needing immediate restocking. Tap the card to see which items.
+              <Text>{"• "}<Text style={{ fontWeight: 'bold' }}>Out of Stock:</Text>{" Items needing immediate restocking. Tap the card to see which items."}</Text>
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ fontWeight: 'bold' }}>Total Revenue:</Text> Sales performance from all transactions. Tap to view detailed analytics.
+              <Text>{"• "}<Text style={{ fontWeight: 'bold' }}>Total Revenue:</Text>{" Sales performance from all transactions. Tap to view detailed analytics."}</Text>
             </Text>
 
             <Divider style={styles.sectionDivider} />
@@ -47,13 +47,13 @@ const HelpModalMaterial = ({ visible, onClose }) => {
               Navigation Guide
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ fontWeight: 'bold' }}>Manage Inventory:</Text> Access the complete inventory monitoring system with search and filters.
+              <Text>{"• "}<Text style={{ fontWeight: 'bold' }}>Manage Inventory:</Text>{" Access the complete inventory monitoring system with search and filters."}</Text>
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ fontWeight: 'bold' }}>Back Buttons:</Text> Use "← Back" buttons to return to the dashboard from any screen.
+              <Text>{"• "}<Text style={{ fontWeight: 'bold' }}>Back Buttons:</Text>{" Use \"← Back\" buttons to return to the dashboard from any screen."}</Text>
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ fontWeight: 'bold' }}>Recent Activity:</Text> Monitor the latest inventory changes and system updates.
+              <Text>{"• "}<Text style={{ fontWeight: 'bold' }}>Recent Activity:</Text>{" Monitor the latest inventory changes and system updates."}</Text>
             </Text>
 
             <Divider style={styles.sectionDivider} />
@@ -73,9 +73,9 @@ const HelpModalMaterial = ({ visible, onClose }) => {
               Stock Status Indicators
             </Text>
             <Text variant="bodyMedium" style={styles.sectionContent}>
-              • <Text style={{ color: theme.colors.secondary }}>Green:</Text> In Stock - Adequate inventory levels
-              {'\n'}• <Text style={{ color: theme.colors.tertiary }}>Orange:</Text> Low Stock - Below minimum threshold
-              {'\n'}• <Text style={{ color: theme.colors.error }}>Red:</Text> Out of Stock - Immediate attention needed
+              <Text>{"• "}<Text style={{ color: theme.colors.secondary }}>Green:</Text>{" In Stock - Adequate inventory levels"}</Text>
+              {'\n'}<Text>{"• "}<Text style={{ color: theme.colors.tertiary }}>Orange:</Text>{" Low Stock - Below minimum threshold"}</Text>
+              {'\n'}<Text>{"• "}<Text style={{ color: theme.colors.error }}>Red:</Text>{" Out of Stock - Immediate attention needed"}</Text>
             </Text>
 
             <Text variant="titleSmall" style={styles.subSectionTitle}>

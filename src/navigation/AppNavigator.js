@@ -1,15 +1,15 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { Text } from 'react-native';
+import { IconSymbol } from '../../components/ui/IconSymbol';
 
-import HomeScreen from '../screens/HomeScreen';
-import InventoryScreen from '../screens/InventoryScreen';
-import LoginScreen from '../screens/LoginScreen';
+import HomeScreen from '../screens/HomeScreenMaterial';
+import InventoryScreen from '../screens/InventoryScreenMaterial';
+import LoginScreen from '../screens/LoginScreenMaterial';
 import ProfileScreen from '../screens/ProfileScreen';
 import SalesDetails from '../screens/SalesDetails';
-import SalesReport from '../screens/SalesReport';
-import SettingsScreen from '../screens/SettingsScreen';
+import SalesReport from '../screens/SalesReportMaterial';
+import SettingsScreen from '../screens/SettingsScreenMaterial';
 
 
 const Stack = createStackNavigator();
@@ -29,7 +29,7 @@ function MainTabs({ navigation }) {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Dashboard',
-          tabBarIcon: ({ color }) => <Text style={{ color }}>📊</Text>,
+          tabBarIcon: ({ color }) => <IconSymbol name="house.fill" color={color} />,
         }}
       />
       <Tab.Screen
@@ -37,7 +37,7 @@ function MainTabs({ navigation }) {
         component={InventoryScreen}
         options={{
           tabBarLabel: 'Inventory',
-          tabBarIcon: ({ color }) => <Text style={{ color }}>📦</Text>,
+          tabBarIcon: ({ color }) => <IconSymbol name="chevron.right" color={color} />,
         }}
       />
     </Tab.Navigator>

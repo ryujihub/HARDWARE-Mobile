@@ -2,16 +2,15 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { PaperProvider } from 'react-native-paper';
-import { auth } from './src/config/firebase';
-import { lightTheme } from './src/theme/theme';
+import { Provider as PaperProvider } from 'react-native-paper';
+import { auth, onAuthStateChanged } from './src/config/firebase';
 
 // Import screens
-import HomeScreenMaterial from './src/screens/HomeScreenMaterial';
-import InventoryScreenMaterial from './src/screens/InventoryScreenMaterial';
-import LoginScreenMaterial from './src/screens/LoginScreenMaterial';
-import SalesReportMaterial from './src/screens/SalesReportMaterial';
-import SettingsScreenMaterial from './src/screens/SettingsScreenMaterial';
+import HomeScreen from './src/screens/HomeScreenMaterial';
+import InventoryScreen from './src/screens/InventoryScreenMaterial';
+import LoginScreen from './src/screens/LoginScreenMaterial';
+import SalesReport from './src/screens/SalesReportMaterial';
+import SettingsScreen from './src/screens/SettingsScreenMaterial';
 
 
 const Stack = createNativeStackNavigator();
@@ -21,7 +20,7 @@ export default function App() {
   const [initializing, setInitializing] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(user => {
+    const unsubscribe = onAuthStateChanged(user => {
       setUser(user);
       if (initializing) setInitializing(false);
     });
@@ -38,14 +37,19 @@ export default function App() {
   }
 
   return (
-    <PaperProvider theme={lightTheme}>
-      <NavigationContainer>
+    <PaperProvider>
+    <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
-            headerStyle: {
-              backgroundColor: lightTheme.colors.primary,
+              headerStyle: {
+              backgroundColor: '#2196F3',
+              elevation: 4,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
             },
-            headerTintColor: lightTheme.colors.onPrimary,
+            headerTintColor: '#fff',
             headerTitleStyle: {
               fontWeight: 'bold',
             },
@@ -56,7 +60,7 @@ export default function App() {
             <>
               <Stack.Screen
                 name="Home"
-                component={HomeScreenMaterial}
+                component={HomeScreen}
                 options={{
                   title: 'Dashboard',
                   headerRight: () => (
@@ -68,7 +72,7 @@ export default function App() {
               />
               <Stack.Screen
                 name="Inventory"
-                component={InventoryScreenMaterial}
+                component={InventoryScreen}
                 options={({ navigation }) => ({
                   title: 'Stock Monitoring',
                   headerLeft: () => (
@@ -84,7 +88,7 @@ export default function App() {
 
               <Stack.Screen
                 name="SalesReport"
-                component={SalesReportMaterial}
+                component={SalesReport}
                 options={({ navigation }) => ({
                   title: 'Sales Analytics',
                   headerLeft: () => (
@@ -100,7 +104,7 @@ export default function App() {
 
               <Stack.Screen
                 name="Settings"
-                component={SettingsScreenMaterial}
+                component={SettingsScreen}
                 options={({ navigation }) => ({
                   title: 'Settings',
                   headerLeft: () => (
@@ -117,11 +121,11 @@ export default function App() {
           ) : (
             // Non-authenticated stack
             <>
-              <Stack.Screen name="Login" component={LoginScreenMaterial} options={{ headerShown: false }} />
+              <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
             </>
           )}
         </Stack.Navigator>
-      </NavigationContainer>
+    </NavigationContainer>
     </PaperProvider>
   );
 }

@@ -1,11 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 import {
-  Avatar,
-  Card,
-  Chip,
-  Divider,
-  Text,
-  useTheme
+    Avatar,
+    Card,
+    Chip,
+    Divider,
+    Text,
+    useTheme
 } from 'react-native-paper';
 
 export default function InventoryCard({ item }) {
@@ -104,8 +104,6 @@ export default function InventoryCard({ item }) {
             </View>
           )}
         </View>
-
-
       </Card.Content>
     </Card>
   );

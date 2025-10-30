@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, doc, getDoc, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import {
@@ -58,8 +58,9 @@ export default function HomeScreenMaterial() {
                 if (user.displayName) {
                     setUsername(user.displayName);
                 } else {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (userDoc.exists) {
+                    const userRef = doc(db, 'users', user.uid);
+                    const userDoc = await getDoc(userRef);
+                    if (userDoc.exists()) {
                         setUsername(userDoc.data().username || '');
                     }
                 }
@@ -68,19 +69,19 @@ export default function HomeScreenMaterial() {
             }
         };
         loadUsername();
+        
+        // Listen to inventory changes
+        const itemsRef = collection(db, 'inventory');
+        const q = query(itemsRef); // Removed userId filter temporarily
 
-        const itemsRef = db.collection('inventory');
-        const q = itemsRef.where('userId', '==', user.uid);
-
-        const unsubscribe = q.onSnapshot(
+        const unsubscribe = onSnapshot(
+            q,
             snapshot => {
-                const itemsArray = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
+                const itemsArray = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                console.log('Fetched items:', itemsArray.length); // Debug log
                 setItems(itemsArray);
                 setLoading(false);
-                calculateQuickStats(itemsArray, ordersData);
+                // don't calculate here — wait for ordersData to arrive too
             },
             error => {
                 console.error('Error fetching items:', error);
@@ -90,21 +91,21 @@ export default function HomeScreenMaterial() {
         );
 
         return () => unsubscribe();
-    }, [ordersData]);
+    }, []);
 
     useEffect(() => {
-        const ordersRef = collection(db, 'orders');
-        const ordersQuery = query(ordersRef);
+        const user = auth.currentUser;
+        if (!user) return;
 
+        const ordersRef = collection(db, 'orders'); // Use orders collection
+        const ordersQuery = query(ordersRef, orderBy('createdAt', 'desc'));
+        
         const unsubscribeOrders = onSnapshot(
             ordersQuery,
             snapshot => {
-                const fetchedOrders = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
+                const fetchedOrders = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                console.log('All fetched orders:', fetchedOrders); // Show all orders
                 setOrdersData(fetchedOrders);
-                calculateQuickStats(items, fetchedOrders);
             },
             error => {
                 console.error('Error fetching orders data:', error);
@@ -112,20 +113,20 @@ export default function HomeScreenMaterial() {
         );
 
         return () => unsubscribeOrders();
-    }, [items]);
+    }, []);
 
     useEffect(() => {
-        const activityRef = collection(db, 'activity');
-        const q = query(activityRef, orderBy('createdAt', 'desc'), limit(5));
+        const activityCollection = collection(db, 'activity');
+        const q = query(activityCollection, orderBy('createdAt', 'desc'), limit(5));
 
         const unsubscribeActivity = onSnapshot(
             q,
             snapshot => {
-                const activities = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                    createdAt: doc.data().createdAt
-                        ? new Date(doc.data().createdAt.toDate()).toLocaleString()
+                const activities = snapshot.docs.map(d => ({
+                    id: d.id,
+                    ...d.data(),
+                    createdAt: d.data().createdAt
+                        ? new Date(d.data().createdAt.toDate()).toLocaleString()
                         : 'N/A'
                 }));
                 setRecentActivityData(activities);
@@ -141,13 +142,32 @@ export default function HomeScreenMaterial() {
     }, []);
 
     const calculateQuickStats = React.useCallback((itemsData, ordersData) => {
+        console.log('Calculating stats with:', { 
+            itemsCount: itemsData.length, 
+            ordersCount: ordersData.length 
+        }); // Debug log
+        
         const totalItems = itemsData.length;
-        const totalValue = itemsData.reduce((sum, item) =>
-            sum + (item.price || 0) * (item.currentStock || 0), 0);
-        const outOfStock = itemsData.filter(item => item.currentStock === 0).length;
-        const totalSales = ordersData.reduce((sum, order) => sum + (order.total || 0), 0);
+        
+        const totalValue = itemsData.reduce((sum, item) => {
+            const price = Number(item.price) || 0;
+            const stock = Number(item.currentStock) || 0;
+            console.log(`Item ${item.name}: price=${price}, stock=${stock}`); // Debug each item
+            return sum + (price * stock);
+        }, 0);
+        
+        const outOfStock = itemsData.filter(item => {
+            const stock = Number(item.currentStock) || 0;
+            return stock === 0;
+        }).length;
+        
+        const totalSales = ordersData.reduce((sum, order) => {
+            const total = Number(order.total) || 0;
+            return sum + total;
+        }, 0);
+        
         const totalLostAmount = itemsData.reduce((sum, item) => {
-            const variance = item.inventoryVariance || 0;
+            const variance = Number(item.inventoryVariance) || 0;
             const cost = Number(item.cost) || Number(item.sellingPrice) || Number(item.price) || 0;
             if (variance < 0) {
                 return sum + (Math.abs(variance) * cost);
@@ -163,6 +183,15 @@ export default function HomeScreenMaterial() {
             totalLostAmount,
         });
     }, []);
+
+    // Recalculate stats whenever items or orders change. This avoids setting
+    // stats to zero if one of the collections hasn't loaded yet.
+    React.useEffect(() => {
+        // If both are empty it's likely still initializing; don't overwrite
+        // the stats with zeros until at least one dataset has been loaded.
+        if (!items.length && !ordersData.length) return;
+        calculateQuickStats(items, ordersData);
+    }, [items, ordersData, calculateQuickStats]);
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
@@ -201,8 +230,15 @@ export default function HomeScreenMaterial() {
     return (
         <Surface style={[styles.container, { backgroundColor: theme.colors.background }]}>
             <ScrollView
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={refreshing} 
+                        onRefresh={onRefresh}
+                        progressViewOffset={10}
+                    />
+                }
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ touchAction: 'pan-y' }}
             >
                 {/* Header Card */}
                 <Card style={styles.headerCard} mode="elevated">
@@ -228,7 +264,6 @@ export default function HomeScreenMaterial() {
                                 </View>
                             </View>
                             <View style={styles.headerActions}>
-
                                 <IconButton
                                     icon="cog"
                                     size={24}
@@ -257,7 +292,7 @@ export default function HomeScreenMaterial() {
                         <Card.Content style={styles.statContent}>
                             <Ionicons name="cash-outline" size={32} color={theme.colors.secondary} />
                             <Text variant="headlineMedium" style={{ color: theme.colors.secondary }}>
-                                ₱{stats.totalValue.toFixed(0)}
+                                {"₱"}{stats.totalValue.toFixed(0)}
                             </Text>
                             <Text variant="bodySmall" style={{ color: theme.colors.onSecondaryContainer }}>
                                 Total Value
@@ -311,7 +346,7 @@ export default function HomeScreenMaterial() {
                         <Card.Content style={styles.statContent}>
                             <Ionicons name="trending-up-outline" size={32} color={theme.colors.primary} />
                             <Text variant="headlineMedium" style={{ color: theme.colors.primary }}>
-                                ₱{stats.totalSales.toFixed(0)}
+                                {"₱"}{stats.totalSales.toFixed(0)}
                             </Text>
                             <Text variant="bodySmall" style={{ color: theme.colors.onPrimaryContainer }}>
                                 Total Sales
@@ -355,22 +390,37 @@ export default function HomeScreenMaterial() {
                                 No recent activity found.
                             </Text>
                         ) : (
-                            recentActivityData.map((activity, index) => (
-                                <View key={activity.id}>
-                                    <List.Item
-                                        title={activity.message}
-                                        description={`${activity.entityType} • ${activity.userName} • ${activity.createdAt}`}
-                                        left={props => <List.Icon {...props} icon="history" />}
-                                    />
-                                    {index < recentActivityData.length - 1 && <Divider />}
-                                </View>
-                            ))
+                            recentActivityData.map((activity, index) => {
+                                // Try multiple possible actor fields that may exist in activity docs
+                                const actor = activity.processedByName || activity.processedBy || activity.userName || activity.createdByName || activity.createdBy || '';
+                                const entityLabel = activity.entityType || '';
+
+                                return (
+                                    <View key={activity.id}>
+                                        <List.Item
+                                            title={activity.message}
+                                            description={
+                                                <View style={{ flexDirection: 'column' }}>
+                                                    { (entityLabel || actor) && (
+                                                        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                                                            {entityLabel ? `${entityLabel}${actor ? ' • ' : ''}` : ''}{actor}
+                                                        </Text>
+                                                    ) }
+                                                    <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                                                        {activity.createdAt}
+                                                    </Text>
+                                                </View>
+                                            }
+                                            left={props => <List.Icon {...props} icon="history" />}
+                                        />
+                                        {index < recentActivityData.length - 1 && <Divider />}
+                                    </View>
+                                );
+                            })
                         )}
                     </Card.Content>
                 </Card>
             </ScrollView>
-
-
 
             {/* Out of Stock Modal */}
             <Portal>
@@ -383,8 +433,8 @@ export default function HomeScreenMaterial() {
                     <Divider style={{ marginVertical: 12 }} />
 
                     {items.filter(item => item.currentStock === 0).length === 0 ? (
-                        <Text style={{ textAlign: 'center', padding: 20 }}>
-                            No items are currently out of stock! 🎉
+                            <Text style={{ textAlign: 'center', padding: 20 }}>
+                            {"No items are currently out of stock! 🎉"}
                         </Text>
                     ) : (
                         <ScrollView style={styles.modalScrollView}>
@@ -395,9 +445,9 @@ export default function HomeScreenMaterial() {
                                             <View style={styles.itemInfo}>
                                                 <Text variant="titleMedium">{item.name}</Text>
                                                 <Text variant="bodySmall">#{item.productCode}</Text>
-                                                <Text variant="bodySmall">Min Stock: {item.minimumStock} {item.unit}</Text>
+                                                <Text variant="bodySmall">{"Min Stock: "}{item.minimumStock}{" "}{item.unit}</Text>
                                                 <Text variant="titleSmall" style={{ color: theme.colors.secondary }}>
-                                                    ₱{item.price?.toFixed(2)}
+                                                    {"₱"}{item.price?.toFixed(2)}
                                                 </Text>
                                             </View>
                                             <Chip
@@ -512,7 +562,6 @@ const styles = StyleSheet.create({
         marginTop: 8,
         marginBottom: 16,
     },
-
     modalContainer: {
         margin: 20,
         padding: 20,

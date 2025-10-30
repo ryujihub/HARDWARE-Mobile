@@ -34,16 +34,13 @@ export default function SalesReportMaterial({ navigation }) {
   ];
 
   useEffect(() => {
-    const ordersRef = collection(db, 'orders');
-    const ordersQuery = query(ordersRef, orderBy('createdAt', 'desc'));
+    const ordersCollection = collection(db, 'orders');
+    const ordersQuery = query(ordersCollection, orderBy('createdAt', 'desc'));
 
     const unsubscribeOrders = onSnapshot(
       ordersQuery,
       snapshot => {
-        const fetchedOrders = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const fetchedOrders = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
         setOrdersData(fetchedOrders);
         calculateAnalytics(fetchedOrders);
         setLoading(false);

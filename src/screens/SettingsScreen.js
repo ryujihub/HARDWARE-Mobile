@@ -1,16 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
-import { auth, db } from '../config/firebase';
+import { auth, db, signOut } from '../config/firebase';
 
 export default function SettingsScreen({ navigation }) {
   const [settings, setSettings] = useState({
@@ -32,11 +33,11 @@ export default function SettingsScreen({ navigation }) {
         throw new Error('No user logged in');
       }
 
-      const settingsRef = db.collection('settings').doc(user.uid);
-      const doc = await settingsRef.get();
+      const settingsRef = doc(db, 'settings', user.uid);
+      const snapshot = await getDoc(settingsRef);
 
-      if (doc.exists) {
-        setSettings(doc.data());
+      if (snapshot.exists()) {
+        setSettings(snapshot.data());
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -54,8 +55,8 @@ export default function SettingsScreen({ navigation }) {
         throw new Error('No user logged in');
       }
 
-      const settingsRef = db.collection('settings').doc(user.uid);
-      await settingsRef.set(settings);
+      const settingsRef = doc(db, 'settings', user.uid);
+      await setDoc(settingsRef, settings);
       Alert.alert('Success', 'Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -160,7 +161,7 @@ export default function SettingsScreen({ navigation }) {
               {
                 text: 'Logout',
                 style: 'destructive',
-                onPress: () => auth.signOut(),
+                onPress: () => signOut(),
               },
             ]);
           }}

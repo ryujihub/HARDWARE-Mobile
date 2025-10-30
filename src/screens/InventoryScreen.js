@@ -1,16 +1,15 @@
 import { Ionicons } from '@expo/vector-icons';
-import firebase from 'firebase/compat/app';
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, increment, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import HelpModal from '../components/HelpModal';
 import { auth, db } from '../config/firebase'; // Ensure db is FIRESTORE_DB
@@ -34,8 +33,8 @@ export default function InventoryScreen({ navigation, route }) {
 
 
   useEffect(() => {
-    const movementsRef = db.collection('stockMovements');
-    const unsubscribeMovements = movementsRef.onSnapshot(async snapshot => {
+    const movementsRef = collection(db, 'stockMovements');
+    const unsubscribeMovements = onSnapshot(movementsRef, async snapshot => {
       // Process only added or modified documents to avoid duplicate updates
       const changes = snapshot.docChanges();
       for (const change of changes) {
@@ -59,13 +58,11 @@ export default function InventoryScreen({ navigation, route }) {
                 ? -Math.abs(Number(mv.quantity) || 0)
                 : Math.abs(Number(mv.quantity) || 0);
 
-            // Use atomic increment to avoid race conditions
-            await db
-              .collection('inventory')
-              .doc(itemId)
-              .update({
-                currentStock: firebase.firestore.FieldValue.increment(delta),
-              });
+            // Use atomic increment to avoid race conditions (modular API)
+            const itemDocRef = doc(db, 'inventory', itemId);
+            await updateDoc(itemDocRef, {
+              currentStock: increment(delta),
+            });
           } catch (err) {
             console.error('Failed to apply stock movement atomically:', err, mv);
           }
@@ -107,9 +104,10 @@ export default function InventoryScreen({ navigation, route }) {
           if (user.displayName) {
             setUsername(user.displayName);
           } else {
-            const userDoc = await db.collection('users').doc(user.uid).get();
-            if (userDoc.exists) {
-              setUsername(userDoc.data().username || 'Unknown User');
+            const userRef = doc(db, 'users', user.uid);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists()) {
+              setUsername(userSnap.data().username || 'Unknown User');
             }
           }
         } catch (e) {
@@ -130,23 +128,23 @@ export default function InventoryScreen({ navigation, route }) {
       }
 
       console.log('Starting to fetch inventory items...');
-      const itemsRef = db.collection('inventory');
+      const itemsRef = collection(db, 'inventory');
 
       // Fetch all items to inspect their userId values
-      const allItemsSnapshot = await itemsRef.get();
+      const allItemsSnapshot = await getDocs(itemsRef);
       console.log('Total items in database:', allItemsSnapshot.docs.length);
 
-      allItemsSnapshot.docs.forEach(doc => {
-        const data = doc.data();
-        console.log(`Item ID: ${doc.id}, Name: ${data.name}, UserId: ${data.userId}`);
+      allItemsSnapshot.docs.forEach(docSnap => {
+        const data = docSnap.data();
+        console.log(`Item ID: ${docSnap.id}, Name: ${data.name}, UserId: ${data.userId}`);
       });
 
       // Identify and fix items that don't have a userId by assigning them to the current user
       const fixPromises = allItemsSnapshot.docs
-        .filter(doc => doc.data().userId !== user.uid) // Filter items whose userId is not the current user's UID
-        .map(doc => {
-          console.log('Fixing item without userId:', doc.id, 'Assigning to:', user.uid);
-          return doc.ref.update({
+        .filter(docSnap => docSnap.data().userId !== user.uid) // Filter items whose userId is not the current user's UID
+        .map(docSnap => {
+          console.log('Fixing item without userId:', docSnap.id, 'Assigning to:', user.uid);
+          return updateDoc(doc(db, 'inventory', docSnap.id), {
             userId: user.uid,
             lastUpdated: new Date(),
           });
@@ -161,22 +159,16 @@ export default function InventoryScreen({ navigation, route }) {
       }
 
       // Now, set up the real-time listener for items belonging to the current user
-      const userItemsQuery = itemsRef.where('userId', '==', user.uid);
+  const userItemsQuery = query(itemsRef, where('userId', '==', user.uid));
       console.log('Querying items for user ID:', user.uid);
 
-      const unsubscribe = userItemsQuery.onSnapshot(
+      const unsubscribe = onSnapshot(
+        userItemsQuery,
         snapshot => {
           console.log('Received snapshot with docs:', snapshot.docs.length);
           console.log('Snapshot metadata:', snapshot.metadata);
 
-          const itemsArray = snapshot.docs.map(doc => {
-            const data = doc.data();
-            console.log('Filtered Item - ID:', doc.id, 'Data:', data);
-            return {
-              id: doc.id,
-              ...data,
-            };
-          });
+          const itemsArray = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
           console.log('Total items fetched for user:', itemsArray.length);
 

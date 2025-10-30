@@ -1,3 +1,4 @@
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import {
@@ -16,7 +17,7 @@ import {
 } from 'react-native-paper';
 import HelpModalMaterial from '../components/HelpModalMaterial';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
-import { auth, db } from '../config/firebase';
+import { auth, db, signOut } from '../config/firebase';
 
 export default function SettingsScreenMaterial({ navigation }) {
   const theme = useTheme();
@@ -44,11 +45,11 @@ export default function SettingsScreenMaterial({ navigation }) {
         throw new Error('No user logged in');
       }
 
-      const settingsRef = db.collection('settings').doc(user.uid);
-      const doc = await settingsRef.get();
+      const settingsRef = doc(db, 'settings', user.uid);
+      const snapshot = await getDoc(settingsRef);
 
-      if (doc.exists) {
-        setSettings({ ...settings, ...doc.data() });
+      if (snapshot.exists()) {
+        setSettings({ ...settings, ...snapshot.data() });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -66,8 +67,8 @@ export default function SettingsScreenMaterial({ navigation }) {
         throw new Error('No user logged in');
       }
 
-      const settingsRef = db.collection('settings').doc(user.uid);
-      await settingsRef.set(settings, { merge: true });
+      const settingsRef = doc(db, 'settings', user.uid);
+      await setDoc(settingsRef, settings, { merge: true });
 
       Alert.alert('Success', 'Settings saved successfully');
     } catch (error) {
@@ -87,8 +88,9 @@ export default function SettingsScreenMaterial({ navigation }) {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: () => auth.signOut()
+          onPress: () => signOut()
         },
+
       ]
     );
   };
