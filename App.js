@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { auth, onAuthStateChanged } from './src/config/firebase';
+import { lightTheme } from './src/theme/theme';
 
 // Import screens
 import HomeScreen from './src/screens/HomeScreenMaterial';
@@ -36,7 +37,7 @@ export default function App() {
   }
 
   return (
-    <PaperProvider>
+    <PaperProvider theme={lightTheme}>
       <NavigationContainer>
         <Stack.Navigator
           screenOptions={{

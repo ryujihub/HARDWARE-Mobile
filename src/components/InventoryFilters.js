@@ -1,5 +1,5 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Chip, Searchbar, SegmentedButtons, Surface, Text, useTheme } from 'react-native-paper';
+import { Chip, Searchbar, Surface, Text, useTheme } from 'react-native-paper';
 
 export default function InventoryFilters({
   searchQuery,
@@ -91,12 +91,19 @@ export default function InventoryFilters({
         <Text variant="titleSmall" style={styles.sectionTitle}>
           Sort By
         </Text>
-        <SegmentedButtons
-          value={sortBy}
-          onValueChange={onSortChange}
-          buttons={sortOptions}
-          style={styles.segmentedButtons}
-        />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipContainer}>
+          {sortOptions.map(option => (
+            <Chip
+              key={option.value}
+              mode={sortBy === option.value ? 'flat' : 'outlined'}
+              selected={sortBy === option.value}
+              onPress={() => onSortChange(option.value)}
+              style={styles.chip}
+            >
+              {option.label}
+            </Chip>
+          ))}
+        </ScrollView>
       </View>
     </Surface>
   );
@@ -122,8 +129,5 @@ const styles = StyleSheet.create({
   },
   chip: {
     marginRight: 8,
-  },
-  segmentedButtons: {
-    marginTop: 4,
   },
 });

@@ -7,7 +7,7 @@ const config = getDefaultConfig(__dirname);
 // Fix for Firebase v9 compatibility with React Native
 config.resolver.alias = {
   ...config.resolver.alias,
-  'idb': path.resolve(__dirname, 'node_modules/idb/build/index.cjs'),
+  idb: path.resolve(__dirname, 'node_modules/idb/build/index.cjs'),
 };
 
 config.resolver.unstable_enableSymlinks = false;

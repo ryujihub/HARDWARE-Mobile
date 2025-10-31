@@ -9,7 +9,6 @@ import {
   DataTable,
   Divider,
   List,
-  SegmentedButtons,
   Surface,
   Text,
   Title,
@@ -237,12 +236,19 @@ export default function SalesReportMaterial({ navigation }) {
             <Text variant="titleMedium" style={styles.sectionTitle}>
               Time Period
             </Text>
-            <SegmentedButtons
-              value={selectedPeriod}
-              onValueChange={setSelectedPeriod}
-              buttons={periodOptions}
-              style={styles.segmentedButtons}
-            />
+            <View style={styles.chipContainer}>
+              {periodOptions.map(option => (
+                <Chip
+                  key={option.value}
+                  mode={selectedPeriod === option.value ? 'flat' : 'outlined'}
+                  selected={selectedPeriod === option.value}
+                  onPress={() => setSelectedPeriod(option.value)}
+                  style={styles.chip}
+                >
+                  {option.label}
+                </Chip>
+              ))}
+            </View>
           </Card.Content>
         </Card>
 
@@ -416,8 +422,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     marginBottom: 12,
   },
-  segmentedButtons: {
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     marginTop: 8,
+  },
+  chip: {
+    marginRight: 8,
+    marginBottom: 4,
   },
   summaryGrid: {
     flexDirection: 'row',

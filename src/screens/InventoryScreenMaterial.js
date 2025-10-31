@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, onSnapshot, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, FAB, Portal, Surface, Text, useTheme } from 'react-native-paper';
@@ -35,7 +35,7 @@ export default function InventoryScreenMaterial({ navigation, route }) {
       }
 
       const itemsRef = collection(db, 'inventory');
-      const userItemsQuery = query(itemsRef, where('userId', '==', user.uid));
+      const userItemsQuery = query(itemsRef); // Removed userId filter temporarily
 
       const unsubscribe = onSnapshot(
         userItemsQuery,
@@ -180,14 +180,14 @@ export default function InventoryScreenMaterial({ navigation, route }) {
           icon="filter"
           size="small"
           onPress={() => setShowFilters(!showFilters)}
-          style={[styles.fab, styles.fabSecondary]}
+          style={[styles.fab, { backgroundColor: theme.colors.primary }]}
           mode="elevated"
         />
         <FAB
           icon="help"
           size="small"
           onPress={() => setShowHelpModal(true)}
-          style={[styles.fab, styles.fabSecondary]}
+          style={[styles.fab, { backgroundColor: theme.colors.secondary }]}
           mode="elevated"
         />
       </View>
