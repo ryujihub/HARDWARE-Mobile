@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Metro Manila Hills Hardware Inventory",
-    "slug": "inventory",
+    "slug": "metro-manila-hills-hardware-ims",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -19,7 +19,6 @@
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#ffffff"
       },
-
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
@@ -45,16 +44,16 @@
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera to scan barcodes."
         }
-        ]
+      ]
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
       "eas": {
-        "projectId": "5288fb9c-71b4-4077-9deb-d9769ed94e1e"
+        "projectId": "c4b319e9-d101-48f2-a0fb-d0da57988d38"
       }
     },
-    "owner": "andreyryuji0909"
+    "owner": "andreyryuji09"
   }
 }
