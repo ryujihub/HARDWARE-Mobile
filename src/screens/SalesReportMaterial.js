@@ -3,17 +3,17 @@ import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import {
-    ActivityIndicator,
-    Card,
-    Chip,
-    DataTable,
-    Divider,
-    List,
-    SegmentedButtons,
-    Surface,
-    Text,
-    Title,
-    useTheme,
+  ActivityIndicator,
+  Card,
+  Chip,
+  DataTable,
+  Divider,
+  List,
+  SegmentedButtons,
+  Surface,
+  Text,
+  Title,
+  useTheme,
 } from 'react-native-paper';
 import { db } from '../config/firebase';
 
@@ -61,7 +61,7 @@ export default function SalesReportMaterial({ navigation }) {
     }
   }, [selectedPeriod, ordersData]);
 
-  const calculateAnalytics = (orders) => {
+  const calculateAnalytics = orders => {
     const filteredOrders = filterOrdersByPeriod(orders, selectedPeriod);
 
     const totalRevenue = filteredOrders.reduce((sum, order) => sum + (order.total || 0), 0);
@@ -69,7 +69,12 @@ export default function SalesReportMaterial({ navigation }) {
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
     const statusBreakdown = filteredOrders.reduce((acc, order) => {
-      const status = (order.status || order.orderStatus || order.state || 'completed').toLowerCase();
+      const status = (
+        order.status ||
+        order.orderStatus ||
+        order.state ||
+        'completed'
+      ).toLowerCase();
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
@@ -96,7 +101,7 @@ export default function SalesReportMaterial({ navigation }) {
             productSales[productName] = {
               quantity,
               revenue,
-              price: item.price || 0
+              price: item.price || 0,
             };
           }
         });
@@ -118,7 +123,7 @@ export default function SalesReportMaterial({ navigation }) {
       } else {
         customerSales[customer] = {
           orders: 1,
-          revenue: order.total || 0
+          revenue: order.total || 0,
         };
       }
     });
@@ -173,25 +178,25 @@ export default function SalesReportMaterial({ navigation }) {
     setRefreshing(false);
   }, [ordersData, selectedPeriod]);
 
-  const getStatusChipProps = (status) => {
+  const getStatusChipProps = status => {
     switch (status?.toLowerCase()) {
       case 'completed':
-        return { 
-          mode: 'flat', 
+        return {
+          mode: 'flat',
           style: { backgroundColor: theme.colors.secondaryContainer },
-          textStyle: { color: theme.colors.secondary }
+          textStyle: { color: theme.colors.secondary },
         };
       case 'pending':
-        return { 
-          mode: 'flat', 
+        return {
+          mode: 'flat',
           style: { backgroundColor: theme.colors.tertiaryContainer },
-          textStyle: { color: theme.colors.tertiary }
+          textStyle: { color: theme.colors.tertiary },
         };
       case 'cancelled':
-        return { 
-          mode: 'flat', 
+        return {
+          mode: 'flat',
           style: { backgroundColor: theme.colors.errorContainer },
-          textStyle: { color: theme.colors.error }
+          textStyle: { color: theme.colors.error },
         };
       default:
         return { mode: 'outlined' };
@@ -243,7 +248,10 @@ export default function SalesReportMaterial({ navigation }) {
 
         {/* Summary Cards */}
         <View style={styles.summaryGrid}>
-          <Card style={[styles.summaryCard, { backgroundColor: theme.colors.primaryContainer }]} mode="elevated">
+          <Card
+            style={[styles.summaryCard, { backgroundColor: theme.colors.primaryContainer }]}
+            mode="elevated"
+          >
             <Card.Content style={styles.summaryContent}>
               <Ionicons name="cash" size={32} color={theme.colors.primary} />
               <Text variant="headlineMedium" style={{ color: theme.colors.primary }}>
@@ -255,7 +263,10 @@ export default function SalesReportMaterial({ navigation }) {
             </Card.Content>
           </Card>
 
-          <Card style={[styles.summaryCard, { backgroundColor: theme.colors.secondaryContainer }]} mode="elevated">
+          <Card
+            style={[styles.summaryCard, { backgroundColor: theme.colors.secondaryContainer }]}
+            mode="elevated"
+          >
             <Card.Content style={styles.summaryContent}>
               <Ionicons name="receipt" size={32} color={theme.colors.secondary} />
               <Text variant="headlineMedium" style={{ color: theme.colors.secondary }}>
@@ -267,7 +278,10 @@ export default function SalesReportMaterial({ navigation }) {
             </Card.Content>
           </Card>
 
-          <Card style={[styles.summaryCard, { backgroundColor: theme.colors.tertiaryContainer }]} mode="elevated">
+          <Card
+            style={[styles.summaryCard, { backgroundColor: theme.colors.tertiaryContainer }]}
+            mode="elevated"
+          >
             <Card.Content style={styles.summaryContent}>
               <Ionicons name="trending-up" size={32} color={theme.colors.tertiary} />
               <Text variant="headlineMedium" style={{ color: theme.colors.tertiary }}>

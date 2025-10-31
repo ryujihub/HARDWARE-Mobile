@@ -11,7 +11,6 @@ import SalesDetails from '../screens/SalesDetails';
 import SalesReport from '../screens/SalesReportMaterial';
 import SettingsScreen from '../screens/SettingsScreenMaterial';
 
-
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -67,8 +66,16 @@ export default function AppNavigator() {
           options={{ title: 'Sales Details' }}
         />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
-        <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'User Profile' }} />
-        <Stack.Screen name="SalesReport" component={SalesReport} options={{ title: 'Sales Report' }} />
+        <Stack.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ title: 'User Profile' }}
+        />
+        <Stack.Screen
+          name="SalesReport"
+          component={SalesReport}
+          options={{ title: 'Sales Report' }}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );

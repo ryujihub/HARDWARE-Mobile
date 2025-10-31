@@ -1,15 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
-import { collection, doc, getDoc, getDocs, increment, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import HelpModal from '../components/HelpModal';
 import { auth, db } from '../config/firebase'; // Ensure db is FIRESTORE_DB
@@ -23,14 +33,6 @@ export default function InventoryScreen({ navigation, route }) {
 
   // Help modal state
   const [showHelpModal, setShowHelpModal] = useState(false);
-
-
-
-
-
-
-
-
 
   useEffect(() => {
     const movementsRef = collection(db, 'stockMovements');
@@ -159,7 +161,7 @@ export default function InventoryScreen({ navigation, route }) {
       }
 
       // Now, set up the real-time listener for items belonging to the current user
-  const userItemsQuery = query(itemsRef, where('userId', '==', user.uid));
+      const userItemsQuery = query(itemsRef, where('userId', '==', user.uid));
       console.log('Querying items for user ID:', user.uid);
 
       const unsubscribe = onSnapshot(
@@ -207,16 +209,6 @@ export default function InventoryScreen({ navigation, route }) {
     }
   };
 
-
-
-
-
-
-
-
-
-
-
   if (loading) {
     return (
       <View style={styles.container}>
@@ -231,7 +223,8 @@ export default function InventoryScreen({ navigation, route }) {
 
   // Filter items based on search query and selected category
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.productCode.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -317,12 +310,16 @@ export default function InventoryScreen({ navigation, route }) {
                   <Text style={styles.itemCode}>#{item.productCode}</Text>
                   {item.inventoryVariance < 0 && (
                     <View style={styles.shortageBadge}>
-                      <Text style={styles.badgeText}>Shortage: {Math.abs(item.inventoryVariance)} {item.unit}</Text>
+                      <Text style={styles.badgeText}>
+                        Shortage: {Math.abs(item.inventoryVariance)} {item.unit}
+                      </Text>
                     </View>
                   )}
                   {item.inventoryVariance > 0 && (
                     <View style={styles.surplusBadge}>
-                      <Text style={styles.badgeText}>Surplus: {item.inventoryVariance} {item.unit}</Text>
+                      <Text style={styles.badgeText}>
+                        Surplus: {item.inventoryVariance} {item.unit}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -350,7 +347,6 @@ export default function InventoryScreen({ navigation, route }) {
                     <Text style={styles.priceValue}>₱{item.price?.toFixed(2)}</Text>
                   </View>
                 </View>
-
 
                 <View style={styles.itemFooter}>
                   <Text style={styles.lastUpdated}>
@@ -646,6 +642,4 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
-
-
 });

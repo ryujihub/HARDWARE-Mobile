@@ -12,7 +12,6 @@ import LoginScreen from './src/screens/LoginScreenMaterial';
 import SalesReport from './src/screens/SalesReportMaterial';
 import SettingsScreen from './src/screens/SettingsScreenMaterial';
 
-
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -38,10 +37,10 @@ export default function App() {
 
   return (
     <PaperProvider>
-    <NavigationContainer>
+      <NavigationContainer>
         <Stack.Navigator
           screenOptions={{
-              headerStyle: {
+            headerStyle: {
               backgroundColor: '#2196F3',
               elevation: 4,
               shadowColor: '#000',
@@ -125,7 +124,7 @@ export default function App() {
             </>
           )}
         </Stack.Navigator>
-    </NavigationContainer>
+      </NavigationContainer>
     </PaperProvider>
   );
 }

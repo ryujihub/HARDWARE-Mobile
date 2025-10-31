@@ -1,12 +1,5 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
-import {
-  Chip,
-  Searchbar,
-  SegmentedButtons,
-  Surface,
-  Text,
-  useTheme,
-} from 'react-native-paper';
+import { Chip, Searchbar, SegmentedButtons, Surface, Text, useTheme } from 'react-native-paper';
 
 export default function InventoryFilters({
   searchQuery,

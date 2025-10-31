@@ -45,7 +45,7 @@ export default function SalesReport({ navigation }) {
     return () => unsubscribeOrders();
   }, []);
 
-  const calculateAnalytics = (orders) => {
+  const calculateAnalytics = orders => {
     const filteredOrders = filterOrdersByPeriod(orders, selectedPeriod);
 
     // Basic metrics
@@ -56,7 +56,12 @@ export default function SalesReport({ navigation }) {
     // Status breakdown - Check multiple possible field names
     const statusBreakdown = filteredOrders.reduce((acc, order) => {
       // Try different possible status field names, default to 'completed' if not set
-      const status = (order.status || order.orderStatus || order.state || 'completed').toLowerCase();
+      const status = (
+        order.status ||
+        order.orderStatus ||
+        order.state ||
+        'completed'
+      ).toLowerCase();
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
@@ -89,7 +94,7 @@ export default function SalesReport({ navigation }) {
             productSales[productName] = {
               quantity,
               revenue,
-              price: item.price || 0
+              price: item.price || 0,
             };
           }
         });
@@ -111,7 +116,7 @@ export default function SalesReport({ navigation }) {
       } else {
         customerSales[customer] = {
           orders: 1,
-          revenue: order.total || 0
+          revenue: order.total || 0,
         };
       }
     });
@@ -137,7 +142,7 @@ export default function SalesReport({ navigation }) {
           } else {
             dailySales[dateKey] = {
               revenue: order.total || 0,
-              orders: 1
+              orders: 1,
             };
           }
         }
@@ -195,7 +200,7 @@ export default function SalesReport({ navigation }) {
     setRefreshing(false);
   }, [ordersData, selectedPeriod]);
 
-  const getStatusStyle = (status) => {
+  const getStatusStyle = status => {
     switch (status?.toLowerCase()) {
       case 'completed':
         return { color: '#2E7D32', backgroundColor: '#E8F5E9' };
@@ -207,8 +212,6 @@ export default function SalesReport({ navigation }) {
         return { color: '#666', backgroundColor: '#f5f5f5' };
     }
   };
-
-
 
   const renderPeriodFilter = () => (
     <View style={styles.filterContainer}>
@@ -223,17 +226,19 @@ export default function SalesReport({ navigation }) {
             key={period.key}
             style={[
               styles.filterButton,
-              selectedPeriod === period.key && styles.filterButtonActive
+              selectedPeriod === period.key && styles.filterButtonActive,
             ]}
             onPress={() => {
               setSelectedPeriod(period.key);
               calculateAnalytics(ordersData);
             }}
           >
-            <Text style={[
-              styles.filterButtonText,
-              selectedPeriod === period.key && styles.filterButtonTextActive
-            ]}>
+            <Text
+              style={[
+                styles.filterButtonText,
+                selectedPeriod === period.key && styles.filterButtonTextActive,
+              ]}
+            >
               {period.label}
             </Text>
           </TouchableOpacity>
@@ -300,7 +305,9 @@ export default function SalesReport({ navigation }) {
         <View style={styles.summaryContainer}>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Average Order</Text>
-            <Text style={styles.summaryValue}>₱{analytics.averageOrderValue?.toFixed(2) || '0.00'}</Text>
+            <Text style={styles.summaryValue}>
+              ₱{analytics.averageOrderValue?.toFixed(2) || '0.00'}
+            </Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Completed</Text>
@@ -383,9 +390,7 @@ export default function SalesReport({ navigation }) {
                   <Text style={styles.customerRank}>#{index + 1}</Text>
                   <View style={styles.customerDetails}>
                     <Text style={styles.customerName}>{customer.name}</Text>
-                    <Text style={styles.customerStats}>
-                      {customer.orders} orders
-                    </Text>
+                    <Text style={styles.customerStats}>{customer.orders} orders</Text>
                   </View>
                 </View>
                 <Text style={styles.customerRevenue}>₱{customer.revenue.toFixed(2)}</Text>
@@ -395,8 +400,6 @@ export default function SalesReport({ navigation }) {
             <Text style={styles.noDataText}>No customer data available</Text>
           )}
         </View>
-
-
 
         {/* Recent Orders */}
         <View style={styles.sectionContainer}>
@@ -413,7 +416,9 @@ export default function SalesReport({ navigation }) {
                   <View>
                     <Text style={styles.orderId}>Order #{order.id?.slice(-6) || 'N/A'}</Text>
                     <Text style={styles.orderDate}>
-                      {order.createdAt ? new Date(order.createdAt.toDate()).toLocaleDateString() : 'N/A'}
+                      {order.createdAt
+                        ? new Date(order.createdAt.toDate()).toLocaleDateString()
+                        : 'N/A'}
                     </Text>
                   </View>
                   <Text style={styles.orderAmount}>₱{order.total?.toFixed(2) || '0.00'}</Text>
@@ -427,20 +432,20 @@ export default function SalesReport({ navigation }) {
                   {order.items && order.items.length > 0 && (
                     <View style={styles.itemsContainer}>
                       {order.items.slice(0, 2).map((item, index) => (
-                          <Text key={index} style={styles.orderItem}>
+                        <Text key={index} style={styles.orderItem}>
                           - {item.name || item.productName || 'Item'} × {item.quantity || 1}
                         </Text>
                       ))}
                       {order.items.length > 2 && (
-                        <Text style={styles.orderItem}>- ... and {order.items.length - 2} more items</Text>
+                        <Text style={styles.orderItem}>
+                          - ... and {order.items.length - 2} more items
+                        </Text>
                       )}
                     </View>
                   )}
 
                   <View style={styles.orderMeta}>
-                    <Text style={styles.paymentMethod}>
-                      {order.paymentMethod || 'Cash'}
-                    </Text>
+                    <Text style={styles.paymentMethod}>{order.paymentMethod || 'Cash'}</Text>
                     {order.status && (
                       <Text style={[styles.orderStatus, getStatusStyle(order.status)]}>
                         {order.status.charAt(0).toUpperCase() + order.status.slice(1).toLowerCase()}
@@ -453,7 +458,7 @@ export default function SalesReport({ navigation }) {
                   <Text style={styles.orderTime}>
                     {new Date(order.createdAt.toDate()).toLocaleTimeString([], {
                       hour: '2-digit',
-                      minute: '2-digit'
+                      minute: '2-digit',
                     })}
                   </Text>
                 )}

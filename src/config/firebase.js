@@ -1,16 +1,12 @@
 import { initializeApp } from 'firebase/app';
 import {
-    createUserWithEmailAndPassword,
-    onAuthStateChanged as firebaseOnAuthStateChanged,
-    signOut as firebaseSignOut,
-    getAuth,
-    signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged as firebaseOnAuthStateChanged,
+  signOut as firebaseSignOut,
+  getAuth,
+  signInWithEmailAndPassword,
 } from 'firebase/auth';
-import {
-    doc,
-    getDoc,
-    getFirestore,
-} from 'firebase/firestore';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -65,7 +61,7 @@ export const signOut = async () => {
 };
 
 // Expose onAuthStateChanged wrapper
-export const onAuthStateChanged = (cb) => firebaseOnAuthStateChanged(auth, cb);
+export const onAuthStateChanged = cb => firebaseOnAuthStateChanged(auth, cb);
 
 // Test database connection (modular)
 export const testDatabaseConnection = async () => {
@@ -81,4 +77,3 @@ export const testDatabaseConnection = async () => {
 };
 
 export { auth, db };
-

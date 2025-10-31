@@ -2,18 +2,18 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import {
-    ActivityIndicator,
-    Button,
-    Card,
-    Divider,
-    List,
-    Portal,
-    Surface,
-    Switch,
-    Text,
-    TextInput,
-    Title,
-    useTheme
+  ActivityIndicator,
+  Button,
+  Card,
+  Divider,
+  List,
+  Portal,
+  Surface,
+  Switch,
+  Text,
+  TextInput,
+  Title,
+  useTheme,
 } from 'react-native-paper';
 import HelpModalMaterial from '../components/HelpModalMaterial';
 import PrivacyPolicyModal from '../components/PrivacyPolicyModal';
@@ -80,19 +80,14 @@ export default function SettingsScreenMaterial({ navigation }) {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
-          style: 'destructive',
-          onPress: () => signOut()
-        },
-
-      ]
-    );
+    Alert.alert('Logout', 'Are you sure you want to logout?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Logout',
+        style: 'destructive',
+        onPress: () => signOut(),
+      },
+    ]);
   };
 
   if (loading) {
@@ -114,11 +109,11 @@ export default function SettingsScreenMaterial({ navigation }) {
           <Card.Content>
             <Title>App Settings</Title>
             <Divider style={styles.divider} />
-            
+
             <TextInput
               label="Currency Symbol"
               value={settings.currency}
-              onChangeText={(text) => setSettings({ ...settings, currency: text })}
+              onChangeText={text => setSettings({ ...settings, currency: text })}
               mode="outlined"
               style={styles.input}
               left={<TextInput.Icon icon="currency-usd" />}
@@ -127,7 +122,7 @@ export default function SettingsScreenMaterial({ navigation }) {
             <TextInput
               label="Refresh Interval (minutes)"
               value={settings.refreshInterval}
-              onChangeText={(text) => setSettings({ ...settings, refreshInterval: text })}
+              onChangeText={text => setSettings({ ...settings, refreshInterval: text })}
               mode="outlined"
               keyboardType="numeric"
               style={styles.input}
@@ -141,7 +136,7 @@ export default function SettingsScreenMaterial({ navigation }) {
               right={() => (
                 <Switch
                   value={settings.notifications}
-                  onValueChange={(value) => setSettings({ ...settings, notifications: value })}
+                  onValueChange={value => setSettings({ ...settings, notifications: value })}
                 />
               )}
             />
@@ -153,21 +148,19 @@ export default function SettingsScreenMaterial({ navigation }) {
               right={() => (
                 <Switch
                   value={settings.autoBackup}
-                  onValueChange={(value) => setSettings({ ...settings, autoBackup: value })}
+                  onValueChange={value => setSettings({ ...settings, autoBackup: value })}
                 />
               )}
             />
           </Card.Content>
         </Card>
 
-
-
         {/* About */}
         <Card style={styles.card} mode="elevated">
           <Card.Content>
             <Title>About</Title>
             <Divider style={styles.divider} />
-            
+
             <List.Item
               title="Version"
               description="1.0.0"

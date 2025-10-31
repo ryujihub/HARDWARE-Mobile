@@ -2,14 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { auth, db, signOut } from '../config/firebase';
 
@@ -93,8 +93,6 @@ export default function SettingsScreen({ navigation }) {
           <Text style={styles.sectionTitle}>User Preferences</Text>
         </View>
 
-
-
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>
             <Text style={styles.settingLabel}>Default Currency</Text>
@@ -112,7 +110,6 @@ export default function SettingsScreen({ navigation }) {
           <Ionicons name="settings-outline" size={24} color="#007AFF" />
           <Text style={styles.sectionTitle}>System Settings</Text>
         </View>
-
 
         <View style={styles.settingItem}>
           <View style={styles.settingInfo}>

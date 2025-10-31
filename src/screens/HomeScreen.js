@@ -1,15 +1,24 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { collection, doc, getDoc, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  limit,
+  onSnapshot,
+  orderBy,
+  query,
+  where,
+} from 'firebase/firestore';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import HelpModal from '../components/HelpModal'; // Import the new HelpModal component
 import { auth, db } from '../config/firebase'; // Assuming firebase.js exports FIRESTORE_DB
@@ -130,7 +139,9 @@ export default function HomeScreen() {
         const activities = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
-          createdAt: doc.data().createdAt ? new Date(doc.data().createdAt.toDate()).toLocaleString() : 'N/A'
+          createdAt: doc.data().createdAt
+            ? new Date(doc.data().createdAt.toDate()).toLocaleString()
+            : 'N/A',
         }));
         setRecentActivityData(activities);
         setLoadingActivity(false);
@@ -147,14 +158,17 @@ export default function HomeScreen() {
 
   const calculateQuickStats = React.useCallback((itemsData, ordersData) => {
     const totalItems = itemsData.length;
-    const totalValue = itemsData.reduce((sum, item) => sum + (item.price || 0) * (item.currentStock || 0), 0);
+    const totalValue = itemsData.reduce(
+      (sum, item) => sum + (item.price || 0) * (item.currentStock || 0),
+      0,
+    );
     const outOfStock = itemsData.filter(item => item.currentStock === 0).length;
     const totalSales = ordersData.reduce((sum, order) => sum + (order.total || 0), 0);
     const totalLostAmount = itemsData.reduce((sum, item) => {
       const variance = item.inventoryVariance || 0;
       const cost = Number(item.cost) || Number(item.sellingPrice) || Number(item.price) || 0;
       if (variance < 0) {
-        return sum + (Math.abs(variance) * cost);
+        return sum + Math.abs(variance) * cost;
       }
       return sum;
     }, 0);
@@ -174,7 +188,7 @@ export default function HomeScreen() {
     setRefreshing(false);
   }, []);
 
-  const getStatusStyle = (status) => {
+  const getStatusStyle = status => {
     switch (status.toLowerCase()) {
       case 'completed':
         return { color: '#2E7D32', backgroundColor: '#E8F5E9' };
@@ -219,9 +233,7 @@ export default function HomeScreen() {
           <View style={styles.headerContent}>
             <View style={styles.headerTop}>
               <View>
-                <Text style={styles.welcomeText}>
-                  Welcome Back!
-                </Text>
+                <Text style={styles.welcomeText}>Welcome Back!</Text>
                 {username ? <Text style={styles.usernameText}>{username}</Text> : null}
                 <Text style={styles.dateText}>
                   {new Date().toLocaleDateString('en-US', {
@@ -238,10 +250,7 @@ export default function HomeScreen() {
               >
                 <Ionicons name="settings-outline" size={24} color="#007AFF" />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => setShowHelpModal(true)}
-              >
+              <TouchableOpacity style={styles.iconButton} onPress={() => setShowHelpModal(true)}>
                 <Ionicons name="information-circle-outline" size={24} color="#007AFF" />
               </TouchableOpacity>
             </View>
@@ -329,8 +338,6 @@ export default function HomeScreen() {
             ))
           )}
         </View>
-
-
       </ScrollView>
 
       <HelpModal visible={showHelpModal} onClose={() => setShowHelpModal(false)} />
@@ -354,21 +361,23 @@ export default function HomeScreen() {
                 <Text style={styles.noItemsText}>No items are currently out of stock!</Text>
               ) : (
                 <ScrollView style={styles.outOfStockList}>
-                  {items.filter(item => item.currentStock === 0).map(item => (
-                    <View key={item.id} style={styles.outOfStockItem}>
-                      <View style={styles.itemInfo}>
-                        <Text style={styles.itemName}>{item.name}</Text>
-                        <Text style={styles.itemCode}>#{item.productCode}</Text>
-                        <Text style={styles.itemDetails}>
-                          Min Stock: {item.minimumStock} {item.unit}
-                        </Text>
-                        <Text style={styles.itemPrice}>₱{item.price?.toFixed(2)}</Text>
+                  {items
+                    .filter(item => item.currentStock === 0)
+                    .map(item => (
+                      <View key={item.id} style={styles.outOfStockItem}>
+                        <View style={styles.itemInfo}>
+                          <Text style={styles.itemName}>{item.name}</Text>
+                          <Text style={styles.itemCode}>#{item.productCode}</Text>
+                          <Text style={styles.itemDetails}>
+                            Min Stock: {item.minimumStock} {item.unit}
+                          </Text>
+                          <Text style={styles.itemPrice}>₱{item.price?.toFixed(2)}</Text>
+                        </View>
+                        <View style={styles.itemStatus}>
+                          <Text style={styles.outOfStockLabel}>OUT OF STOCK</Text>
+                        </View>
                       </View>
-                      <View style={styles.itemStatus}>
-                        <Text style={styles.outOfStockLabel}>OUT OF STOCK</Text>
-                      </View>
-                    </View>
-                  ))}
+                    ))}
                 </ScrollView>
               )}
             </View>
@@ -387,8 +396,6 @@ export default function HomeScreen() {
           </View>
         </View>
       )}
-
-
     </View>
   );
 }

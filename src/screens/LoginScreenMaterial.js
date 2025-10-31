@@ -1,16 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import {
-    ActivityIndicator,
-    Button,
-    Card,
-    Divider,
-    IconButton,
-    Surface,
-    Text,
-    TextInput,
-    Title,
-    useTheme,
+  ActivityIndicator,
+  Button,
+  Card,
+  Divider,
+  IconButton,
+  Surface,
+  Text,
+  TextInput,
+  Title,
+  useTheme,
 } from 'react-native-paper';
 import { signIn } from '../config/firebase';
 
@@ -147,7 +147,7 @@ export default function LoginScreenMaterial({ navigation }) {
               <Text variant="titleSmall" style={styles.captchaLabel}>
                 Security Check
               </Text>
-              
+
               <Card style={styles.captchaCard} mode="outlined">
                 <Card.Content style={styles.captchaContent}>
                   <Text variant="headlineSmall" style={styles.captchaText}>
@@ -188,7 +188,10 @@ export default function LoginScreenMaterial({ navigation }) {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}>
+          <Text
+            variant="bodySmall"
+            style={{ color: theme.colors.onSurfaceVariant, textAlign: 'center' }}
+          >
             Metro Manila Hills Hardware{'\n'}Inventory Management System
           </Text>
         </View>
