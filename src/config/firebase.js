@@ -20,6 +20,8 @@ try {
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
     console.log('Firebase initialized successfully');
+    console.log('Project ID:', firebaseConfig.projectId);
+    console.log('Auth Domain:', firebaseConfig.authDomain);
   } else {
     firebase.app();
     console.log('Firebase already initialized');
@@ -71,6 +73,13 @@ export const signOut = async () => {
 auth.onAuthStateChanged(user => {
   if (user) {
     console.log('Auth state changed: User is signed in', user.uid);
+    console.log('User email:', user.email);
+    // Test if we can get an ID token
+    user.getIdToken().then(token => {
+      console.log('ID token obtained successfully');
+    }).catch(error => {
+      console.error('Failed to get ID token:', error);
+    });
   } else {
     console.log('Auth state changed: User is signed out');
   }
@@ -79,8 +88,15 @@ auth.onAuthStateChanged(user => {
 // Test database connection
 export const testDatabaseConnection = async () => {
   try {
-  await db.collection('test').doc('connection-test').get();
-  console.log('Database connection successful!');
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('No user for database test');
+      return false;
+    }
+    
+    console.log('Testing database connection for user:', user.uid);
+    const testDoc = await db.collection('test').doc('connection-test').get();
+    console.log('Database connection successful!');
     return true;
   } catch (error) {
     console.error('Database connection failed:', error);

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { Alert, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import {
     ActivityIndicator,
     FAB,
@@ -32,21 +32,112 @@ export default function InventoryScreenMaterial({ navigation, route }) {
 
 
     useEffect(() => {
-        loadItems();
+        let unsubscribeItems = null;
+        
+        // Wait for auth state to be determined before loading items
+        const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
+            // Clean up previous listener if it exists
+            if (unsubscribeItems && typeof unsubscribeItems === 'function') {
+                unsubscribeItems();
+                unsubscribeItems = null;
+            }
+            
+            if (user) {
+                unsubscribeItems = await loadItems();
+            } else {
+                setLoading(false);
+                setItems([]);
+            }
+        });
+
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeItems && typeof unsubscribeItems === 'function') {
+                unsubscribeItems();
+            }
+        };
     }, []);
 
     const loadItems = async () => {
         try {
             const user = auth.currentUser;
             if (!user) {
-                throw new Error('No user logged in');
+                console.log('No user logged in, skipping item load');
+                setLoading(false);
+                return;
             }
 
+            console.log('=== DEBUGGING AUTH STATE ===');
+            console.log('User UID:', user.uid);
+            console.log('User email:', user.email);
+            console.log('User emailVerified:', user.emailVerified);
+            console.log('User isAnonymous:', user.isAnonymous);
+            console.log('User metadata:', user.metadata);
+            
+            // Get and log the ID token
+            try {
+                const idToken = await user.getIdToken(true); // Force refresh
+                console.log('ID token obtained, length:', idToken.length);
+                console.log('ID token first 50 chars:', idToken.substring(0, 50));
+            } catch (tokenError) {
+                console.error('Failed to get ID token:', tokenError);
+                Alert.alert('Auth Error', 'Failed to get authentication token. Please logout and login again.');
+                setLoading(false);
+                return;
+            }
+            
+            // Test basic read access first
+            try {
+                console.log('Testing basic read access...');
+                const testDoc = await db.collection('inventory').limit(1).get();
+                console.log('Basic read test successful, docs:', testDoc.docs.length);
+            } catch (testError) {
+                console.error('Basic read test failed:', testError);
+                console.error('Error code:', testError.code);
+                console.error('Error message:', testError.message);
+                Alert.alert('Database Error', `Cannot connect to database: ${testError.message}\nError code: ${testError.code}`);
+                setLoading(false);
+                return;
+            }
+
+            // Test write access
+            try {
+                console.log('Testing write access...');
+                const testRef = db.collection('test').doc('auth-test');
+                await testRef.set({
+                    userId: user.uid,
+                    timestamp: new Date(),
+                    test: true
+                });
+                console.log('Write test successful');
+                // Clean up test document
+                await testRef.delete();
+            } catch (writeError) {
+                console.error('Write test failed:', writeError);
+                console.error('Write error code:', writeError.code);
+            }
+            
             const itemsRef = db.collection('inventory');
-            const userItemsQuery = itemsRef.where('userId', '==', user.uid);
+            console.log('InventoryScreen: Querying inventory for userId:', user.uid);
+            
+            // Check all items in the collection first
+            try {
+                const allItems = await itemsRef.get();
+                console.log('Total items in inventory collection:', allItems.docs.length);
+                allItems.docs.forEach(doc => {
+                    const data = doc.data();
+                    console.log('Item:', doc.id, 'userId:', data.userId, 'name:', data.name);
+                });
+            } catch (error) {
+                console.error('Error checking all items:', error);
+            }
+            
+            // Shared inventory - all users see the same items
+            const userItemsQuery = itemsRef;
 
             const unsubscribe = userItemsQuery.onSnapshot(
                 snapshot => {
+                    console.log('Received snapshot with', snapshot.docs.length, 'items');
                     const itemsArray = snapshot.docs.map(doc => ({
                         id: doc.id,
                         ...doc.data(),
@@ -57,16 +148,21 @@ export default function InventoryScreenMaterial({ navigation, route }) {
                 },
                 error => {
                     console.error('Error fetching items:', error);
-                    Alert.alert('Error', `Failed to load items: ${error.message}`);
+                    if (error.code === 'permission-denied') {
+                        Alert.alert('Permission Error', 'You do not have permission to access this data. Please check your account permissions.');
+                    } else {
+                        Alert.alert('Error', `Failed to load items: ${error.message}`);
+                    }
                     setLoading(false);
                 },
             );
 
-            return () => unsubscribe();
+            return unsubscribe;
         } catch (error) {
             console.error('Error in loadItems:', error);
             Alert.alert('Error', error.message);
             setLoading(false);
+            return null;
         }
     };
 

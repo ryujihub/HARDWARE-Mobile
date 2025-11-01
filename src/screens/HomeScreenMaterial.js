@@ -46,50 +46,94 @@ export default function HomeScreenMaterial() {
     const [showHelpModal, setShowHelpModal] = useState(false);
 
     useEffect(() => {
-        const user = auth.currentUser;
-        if (!user) {
-            setError('No user logged in');
-            setLoading(false);
-            return;
-        }
+        let unsubscribeItems = null;
+        
+        const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
+            // Clean up previous listener if it exists
+            if (unsubscribeItems && typeof unsubscribeItems === 'function') {
+                unsubscribeItems();
+                unsubscribeItems = null;
+            }
+            
+            if (!user) {
+                setError('No user logged in');
+                setLoading(false);
+                setItems([]);
+                return;
+            }
 
-        const loadUsername = async () => {
-            try {
-                if (user.displayName) {
-                    setUsername(user.displayName);
-                } else {
-                    const userDoc = await db.collection('users').doc(user.uid).get();
-                    if (userDoc.exists) {
-                        setUsername(userDoc.data().username || '');
+            console.log('=== USER ID DEBUG ===');
+            console.log('Current user UID:', user.uid);
+            console.log('Current user email:', user.email);
+            console.log('Previous user UID was: UiFyE4p0rCNPhE05wAsrXP60Wzn2');
+            console.log('UIDs match?', user.uid === 'UiFyE4p0rCNPhE05wAsrXP60Wzn2');
+            console.log('====================');
+
+            const loadUsername = async () => {
+                try {
+                    if (user.displayName) {
+                        setUsername(user.displayName);
+                    } else {
+                        const userDoc = await db.collection('users').doc(user.uid).get();
+                        if (userDoc.exists) {
+                            setUsername(userDoc.data().username || '');
+                        }
                     }
+                } catch (e) {
+                    console.error('Failed to load username:', e);
                 }
-            } catch (e) {
-                console.error('Failed to load username:', e);
+            };
+            loadUsername();
+
+            const itemsRef = db.collection('inventory');
+            console.log('HomeScreen: Querying inventory for userId:', user.uid);
+            
+            // First, let's check if there are ANY items in the inventory collection
+            try {
+                const allItems = await itemsRef.get();
+                console.log('Total items in inventory collection:', allItems.docs.length);
+                allItems.docs.forEach(doc => {
+                    const data = doc.data();
+                    console.log('Item:', doc.id, 'userId:', data.userId, 'name:', data.name);
+                });
+            } catch (error) {
+                console.error('Error checking all items:', error);
+            }
+            
+            // Shared inventory - all users see the same items
+            const q = itemsRef;
+
+            unsubscribeItems = q.onSnapshot(
+                snapshot => {
+                    console.log('=== FILTERED QUERY RESULT ===');
+                    console.log('HomeScreen: Received snapshot with', snapshot.docs.length, 'items for user', user.uid);
+                    console.log('Query was: userId ==', user.uid);
+                    snapshot.docs.forEach(doc => {
+                        console.log('Filtered item:', doc.id, doc.data().name);
+                    });
+                    console.log('=============================');
+                    const itemsArray = snapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data(),
+                    }));
+                    setItems(itemsArray);
+                    setLoading(false);
+                    calculateQuickStats(itemsArray, ordersData);
+                },
+                error => {
+                    console.error('Error fetching items:', error);
+                    setError('Failed to load items');
+                    setLoading(false);
+                },
+            );
+        });
+
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeItems && typeof unsubscribeItems === 'function') {
+                unsubscribeItems();
             }
         };
-        loadUsername();
-
-        const itemsRef = db.collection('inventory');
-        const q = itemsRef.where('userId', '==', user.uid);
-
-        const unsubscribe = q.onSnapshot(
-            snapshot => {
-                const itemsArray = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-                setItems(itemsArray);
-                setLoading(false);
-                calculateQuickStats(itemsArray, ordersData);
-            },
-            error => {
-                console.error('Error fetching items:', error);
-                setError('Failed to load items');
-                setLoading(false);
-            },
-        );
-
-        return () => unsubscribe();
     }, [ordersData]);
 
     useEffect(() => {
