@@ -1,4 +1,4 @@
-package com.andreyryuji09.inventorysystem
+package com.andreyryuji09.inventory
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

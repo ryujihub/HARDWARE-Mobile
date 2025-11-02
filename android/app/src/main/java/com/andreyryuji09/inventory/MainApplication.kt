@@ -1,4 +1,4 @@
-package com.andreyryuji09.inventorysystem
+package com.andreyryuji09.inventory
 
 import android.app.Application
 import android.content.res.Configuration

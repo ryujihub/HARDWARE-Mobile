@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.andreyryuji09.inventorysystem'
+    namespace 'com.andreyryuji09.inventory'
     defaultConfig {
-        applicationId 'com.andreyryuji09.inventorysystem'
+        applicationId 'com.andreyryuji09.inventory'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
