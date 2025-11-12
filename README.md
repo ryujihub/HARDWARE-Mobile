@@ -49,6 +49,29 @@ Join our community of developers creating universal apps.
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
 
+## 🆕 New Features: Barcode Scanning & POS System
+
+This app now includes comprehensive barcode scanning capabilities and a Point of Sale (POS) system!
+
+### Key Features
+- 📱 **Barcode Scanner**: Scan QR codes and barcodes to add/update products
+- 🛒 **Point of Sale**: Quick checkout with barcode scanning
+- ➕ **Product Management**: Add products with barcode scanning or generation
+- ✏️ **Easy Editing**: Update product information including barcodes
+- 📊 **Real-time Updates**: Automatic inventory and sales tracking
+
+### Quick Start
+1. **Add Products**: Home → Add Product → Scan/Generate barcode
+2. **Process Sales**: Home → Point of Sale → Scan items → Checkout
+3. **Edit Products**: Inventory → Tap edit icon → Update → Save
+
+### Documentation
+- 📖 **[Quick Start Guide](QUICK_START_BARCODE.md)** - Get started quickly
+- 📋 **[Feature Documentation](BARCODE_FEATURES.md)** - Detailed feature info
+- 🔄 **[POS Workflow](POS_WORKFLOW.md)** - Complete workflow guide
+- 🧪 **[Testing Guide](TESTING_GUIDE.md)** - Comprehensive testing checklist
+- 📝 **[Implementation Summary](IMPLEMENTATION_SUMMARY.md)** - Technical details
+
 ## How to run (Windows PowerShell)
 
 1. Install dependencies:
@@ -63,7 +86,9 @@ npm install
 npm start
 ```
 
-3. Useful developer commands:
+3. **Important**: For barcode scanning, use a physical device with Expo Go (camera required)
+
+4. Useful developer commands:
 
 ```powershell
 # Run the app in an Android emulator
@@ -95,3 +120,4 @@ npm install --legacy-peer-deps
 
 - If the Expo CLI shows native module mismatches, confirm your Expo SDK version in `package.json` matches the installed packages.
 - For camera permission issues on Android/iOS, ensure the proper permissions are declared in `app.json` / native configuration.
+- **Camera not working?** Make sure to grant camera permissions when prompted and use a physical device for best results.

@@ -377,6 +377,24 @@ export default function HomeScreenMaterial() {
                         <Title>Quick Actions</Title>
                         <Divider style={{ marginVertical: 12 }} />
                         <List.Item
+                            title="Point of Sale"
+                            description="Quick checkout with barcode scanning"
+                            left={props => <List.Icon {...props} icon="barcode-scan" />}
+                            right={props => <List.Icon {...props} icon="chevron-right" />}
+                            onPress={() => navigation.navigate('POS')}
+                            style={styles.listItem}
+                        />
+                        <Divider />
+                        <List.Item
+                            title="Add Product"
+                            description="Add new product with barcode"
+                            left={props => <List.Icon {...props} icon="plus-box" />}
+                            right={props => <List.Icon {...props} icon="chevron-right" />}
+                            onPress={() => navigation.navigate('ProductForm')}
+                            style={styles.listItem}
+                        />
+                        <Divider />
+                        <List.Item
                             title="Manage Inventory"
                             description="View and update your items"
                             left={props => <List.Icon {...props} icon="package-variant" />}

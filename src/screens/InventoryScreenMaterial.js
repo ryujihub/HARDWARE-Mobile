@@ -305,7 +305,13 @@ export default function InventoryScreenMaterial({ navigation, route }) {
                     style={[styles.fab, styles.fabSecondary]}
                     mode="elevated"
                 />
-
+                <FAB
+                    icon="plus"
+                    label="Add Product"
+                    onPress={() => navigation.navigate('ProductForm')}
+                    style={[styles.fab, styles.fabPrimary]}
+                    mode="elevated"
+                />
             </View>
 
             {/* Help Modal */}

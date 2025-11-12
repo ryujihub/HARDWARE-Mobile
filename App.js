@@ -113,6 +113,38 @@ export default function App() {
                   ),
                 })}
               />
+
+              <Stack.Screen
+                name="POS"
+                component={POSScreenMaterial}
+                options={({ navigation }) => ({
+                  title: 'Point of Sale',
+                  headerLeft: () => (
+                    <TouchableOpacity
+                      onPress={() => navigation.goBack()}
+                      style={{ marginLeft: 15 }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+                    </TouchableOpacity>
+                  ),
+                })}
+              />
+
+              <Stack.Screen
+                name="ProductForm"
+                component={ProductFormMaterial}
+                options={({ navigation }) => ({
+                  title: 'Product Form',
+                  headerLeft: () => (
+                    <TouchableOpacity
+                      onPress={() => navigation.goBack()}
+                      style={{ marginLeft: 15 }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 16 }}>← Back</Text>
+                    </TouchableOpacity>
+                  ),
+                })}
+              />
             </>
           ) : (
             // Non-authenticated stack

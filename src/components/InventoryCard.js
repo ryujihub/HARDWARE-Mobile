@@ -1,15 +1,18 @@
+import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, View } from 'react-native';
 import {
-  Avatar,
-  Card,
-  Chip,
-  Divider,
-  Text,
-  useTheme
+    Avatar,
+    Card,
+    Chip,
+    Divider,
+    IconButton,
+    Text,
+    useTheme,
 } from 'react-native-paper';
 
 export default function InventoryCard({ item }) {
   const theme = useTheme();
+  const navigation = useNavigation();
 
   const getStockStatus = () => {
     const currentStock = item.currentStock || 0;
@@ -42,7 +45,17 @@ export default function InventoryCard({ item }) {
             <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
               #{item.productCode}
             </Text>
+            {item.barcode && (
+              <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+                Barcode: {item.barcode}
+              </Text>
+            )}
           </View>
+          <IconButton
+            icon="pencil"
+            size={20}
+            onPress={() => navigation.navigate('ProductForm', { product: item })}
+          />
         </View>
 
         <Divider style={styles.divider} />
