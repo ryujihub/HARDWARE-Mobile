@@ -39,7 +39,9 @@ export default function ProductFormMaterial({ navigation, route }) {
 
   const handleBarcodeScan = async ({ data }) => {
     setShowScanner(false);
+    // Set both barcode and product code to the same value
     updateField('barcode', data);
+    updateField('productCode', data);
 
     // Check if product with this barcode already exists
     setSearchingBarcode(true);
@@ -101,10 +103,11 @@ export default function ProductFormMaterial({ navigation, route }) {
 
     try {
       const user = auth.currentUser;
+      const barcodeValue = formData.barcode.trim();
       const productData = {
         name: formData.name.trim(),
-        productCode: formData.productCode.trim() || `PROD-${Date.now()}`,
-        barcode: formData.barcode.trim(),
+        productCode: barcodeValue || `PROD-${Date.now()}`, // Product code is same as barcode
+        barcode: barcodeValue,
         category: formData.category.trim() || 'Uncategorized',
         price: parseFloat(formData.price),
         currentStock: parseInt(formData.currentStock),
@@ -155,7 +158,9 @@ export default function ProductFormMaterial({ navigation, route }) {
     // Generate a simple barcode (EAN-13 format simulation)
     const timestamp = Date.now().toString();
     const barcode = timestamp.slice(-12).padStart(12, '0');
+    // Set both barcode and product code to the same value
     updateField('barcode', barcode);
+    updateField('productCode', barcode);
   };
 
   return (
@@ -211,12 +216,13 @@ export default function ProductFormMaterial({ navigation, route }) {
             />
 
             <TextInput
-              label="Product Code"
+              label="Product Code (Same as Barcode)"
               value={formData.productCode}
-              onChangeText={value => updateField('productCode', value)}
               mode="outlined"
               style={styles.input}
-              placeholder="Auto-generated if empty"
+              editable={false}
+              placeholder="Will be same as barcode"
+              right={<TextInput.Icon icon="link" />}
             />
 
             <TextInput

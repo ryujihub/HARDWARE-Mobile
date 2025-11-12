@@ -120,7 +120,7 @@ export default function POSScreenMaterial({ navigation }) {
 
     try {
       const user = auth.currentUser;
-      const saleData = {
+      const orderData = {
         userId: user.uid,
         customerName: customerName || 'Walk-in Customer',
         items: cart.map(item => ({
@@ -130,13 +130,14 @@ export default function POSScreenMaterial({ navigation }) {
           price: item.price,
           total: item.price * item.quantity,
         })),
-        totalAmount: calculateTotal(),
+        total: calculateTotal(), // Changed from totalAmount to total to match orders collection
         timestamp: new Date(),
         paymentMethod: 'Cash',
+        status: 'completed',
       };
 
-      // Add sale record
-      await db.collection('sales').add(saleData);
+      // Add order record
+      await db.collection('orders').add(orderData);
 
       // Update inventory stock
       const batch = db.batch();

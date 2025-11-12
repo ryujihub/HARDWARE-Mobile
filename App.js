@@ -10,6 +10,8 @@ import { lightTheme } from './src/theme/theme';
 import HomeScreenMaterial from './src/screens/HomeScreenMaterial';
 import InventoryScreenMaterial from './src/screens/InventoryScreenMaterial';
 import LoginScreenMaterial from './src/screens/LoginScreenMaterial';
+import POSScreenMaterial from './src/screens/POSScreenMaterial';
+import ProductFormMaterial from './src/screens/ProductFormMaterial';
 import SalesReportMaterial from './src/screens/SalesReportMaterial';
 import SettingsScreenMaterial from './src/screens/SettingsScreenMaterial';
 

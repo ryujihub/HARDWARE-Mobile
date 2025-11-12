@@ -1,23 +1,17 @@
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import { Button, IconButton, Surface, Text } from 'react-native-paper';
 
 export default function BarcodeScanner({ visible, onScan, onClose, title = 'Scan Barcode' }) {
-  const [hasPermission, setHasPermission] = useState(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      requestCameraPermission();
       setScanned(false);
     }
   }, [visible]);
-
-  const requestCameraPermission = async () => {
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    setHasPermission(status === 'granted');
-  };
 
   const handleBarCodeScanned = ({ type, data }) => {
     if (!scanned) {
@@ -26,32 +20,28 @@ export default function BarcodeScanner({ visible, onScan, onClose, title = 'Scan
     }
   };
 
-  if (!visible) return null;
-
-  if (hasPermission === null) {
-    return (
-      <Surface style={styles.container}>
-        <Text>Requesting camera permission...</Text>
-      </Surface>
-    );
-  }
-
-  if (hasPermission === false) {
-    return (
-      <Surface style={styles.container}>
-        <Text style={styles.errorText}>Camera permission denied</Text>
-        <Button mode="contained" onPress={requestCameraPermission} style={styles.button}>
-          Grant Permission
-        </Button>
-        <Button mode="outlined" onPress={onClose} style={styles.button}>
-          Cancel
-        </Button>
-      </Surface>
-    );
-  }
-
   return (
-    <View style={styles.container}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      {!permission ? (
+        <View style={styles.container}>
+          <Text>Requesting camera permission...</Text>
+        </View>
+      ) : !permission.granted ? (
+        <View style={styles.container}>
+          <Text style={styles.errorText}>Camera permission is required</Text>
+          <Button mode="contained" onPress={requestPermission} style={styles.button}>
+            Grant Permission
+          </Button>
+          <Button mode="outlined" onPress={onClose} style={styles.button}>
+            Cancel
+          </Button>
+        </View>
+      ) : (
+        <View style={styles.container}>
       <Surface style={styles.header}>
         <Text variant="titleLarge" style={styles.title}>
           {title}
@@ -59,9 +49,27 @@ export default function BarcodeScanner({ visible, onScan, onClose, title = 'Scan
         <IconButton icon="close" onPress={onClose} />
       </Surface>
 
-      <BarCodeScanner
-        onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+      <CameraView
         style={StyleSheet.absoluteFillObject}
+        facing="back"
+        onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+        barcodeScannerSettings={{
+          barcodeTypes: [
+            'qr',
+            'ean13',
+            'ean8',
+            'upc_a',
+            'upc_e',
+            'code39',
+            'code93',
+            'code128',
+            'codabar',
+            'itf14',
+            'pdf417',
+            'aztec',
+            'datamatrix',
+          ],
+        }}
       />
 
       <View style={styles.overlay}>
@@ -79,6 +87,8 @@ export default function BarcodeScanner({ visible, onScan, onClose, title = 'Scan
         </Surface>
       )}
     </View>
+      )}
+    </Modal>
   );
 }
 
